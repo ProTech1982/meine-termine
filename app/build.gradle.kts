@@ -5,6 +5,9 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+val appVersionName: String = (project.findProperty("appVersionName") as String?) ?: "1.0.0"
+val appVersionCode: Int = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 1
+
 android {
     namespace = "de.protech.termine"
     compileSdk = 35
@@ -13,8 +16,11 @@ android {
         applicationId = "de.protech.termine"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
+
+        // Repository, gegen das die App nach Updates sucht.
+        buildConfigField("String", "UPDATE_REPO", "\"ProTech1982/meine-termine\"")
     }
 
     buildTypes {
@@ -38,6 +44,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {

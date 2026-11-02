@@ -28,6 +28,8 @@ import de.protech.termine.ui.CategoryScreen
 import de.protech.termine.ui.EditScreen
 import de.protech.termine.ui.ListScreen
 import de.protech.termine.ui.TermineViewModel
+import de.protech.termine.ui.UpdateDialogs
+import de.protech.termine.ui.rememberUpdateController
 import de.protech.termine.ui.theme.MeineTermineTheme
 
 class MainActivity : ComponentActivity() {
@@ -52,6 +54,9 @@ class MainActivity : ComponentActivity() {
                 val viewModel: TermineViewModel = viewModel()
                 var hintDismissed by remember { mutableStateOf(false) }
                 val showHint = !setupOk.value && !hintDismissed
+                val updateController = rememberUpdateController()
+
+                UpdateDialogs(controller = updateController)
 
                 NavHost(navController = navController, startDestination = "liste") {
                     composable("liste") {
@@ -62,7 +67,8 @@ class MainActivity : ComponentActivity() {
                             onFixSetup = { openSetup() },
                             onAdd = { navController.navigate("bearbeiten/0") },
                             onOpen = { id -> navController.navigate("bearbeiten/$id") },
-                            onCategories = { navController.navigate("kategorien") }
+                            onCategories = { navController.navigate("kategorien") },
+                            onCheckUpdate = { updateController.check() }
                         )
                     }
                     composable(

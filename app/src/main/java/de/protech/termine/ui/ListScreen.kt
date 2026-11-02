@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,8 +51,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.protech.termine.BuildConfig
 import de.protech.termine.data.AppointmentFull
 
 @Composable
@@ -62,7 +65,8 @@ fun ListScreen(
     onFixSetup: () -> Unit,
     onAdd: () -> Unit,
     onOpen: (Long) -> Unit,
-    onCategories: () -> Unit
+    onCategories: () -> Unit,
+    onCheckUpdate: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showPast by remember { mutableStateOf(false) }
@@ -72,6 +76,9 @@ fun ListScreen(
             TopAppBar(
                 title = { Text("Meine Termine") },
                 actions = {
+                    IconButton(onClick = onCheckUpdate) {
+                        Icon(Icons.Default.SystemUpdate, contentDescription = "Nach Update suchen")
+                    }
                     IconButton(onClick = onCategories) {
                         Icon(Icons.Default.Label, contentDescription = "Kategorien verwalten")
                     }
@@ -144,6 +151,17 @@ fun ListScreen(
                         )
                     }
                 }
+            }
+
+            item {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "Version ${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

@@ -16,6 +16,14 @@ jobs:
       - name: Code auschecken
         uses: actions/checkout@v4
 
+      - name: Versionsnummer festlegen
+        id: version
+        run: |
+          VERSION="1.0.${GITHUB_RUN_NUMBER}"
+          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "code=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION (Code ${GITHUB_RUN_NUMBER})"
+
       - name: JDK 17 einrichten
         uses: actions/setup-java@v4
         with:
@@ -26,29 +34,34 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Debug-APK bauen
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: |
+          ./gradlew assembleDebug --no-daemon --stacktrace \
+            -PappVersionName=${{ steps.version.outputs.name }} \
+            -PappVersionCode=${{ steps.version.outputs.code }}
 
       - name: APK umbenennen
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/app-debug.apk out/meine-termine.apk
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             out/meine-termine-${{ steps.version.outputs.name }}.apk
 
       - name: APK als Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
-          name: meine-termine-apk
-          path: out/meine-termine.apk
+          name: meine-termine-${{ steps.version.outputs.name }}
+          path: out/*.apk
           retention-days: 90
 
-      - name: Release aktualisieren
+      - name: Release veröffentlichen
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          name: Aktuelle Version
+          tag_name: v${{ steps.version.outputs.name }}
+          name: Version ${{ steps.version.outputs.name }}
           body: |
-            Automatisch gebaute Debug-APK vom letzten Push auf main.
-            Direkt auf dem Handy herunterladen und installieren
-            (Installation aus unbekannten Quellen muss erlaubt sein).
-          files: out/meine-termine.apk
-          prerelease: false
+            Automatisch gebaut aus dem letzten Push auf main.
+
+            Änderungen in diesem Build:
+            ${{ github.event.head_commit.message }}
+          files: out/*.apk
+          make_latest: true
