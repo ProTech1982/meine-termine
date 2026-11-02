@@ -20,18 +20,20 @@ import java.io.File
 object ApkDownloader {
 
     private const val FILE_NAME = "meine-termine-update.apk"
+    private const val POLL_INTERVAL_MS = 300L
 
     suspend fun download(
         context: Context,
         info: UpdateInfo,
         onProgress: (Float) -> Unit
-    ): Result<File> = withContext(Dispatchers.IO) {
+    ): Result<File> = withContext<Result<File>>(Dispatchers.IO) {
         try {
             val manager = context.getSystemService<DownloadManager>()
                 ?: return@withContext Result.failure(IllegalStateException("DownloadManager fehlt"))
 
             val targetDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
                 ?: return@withContext Result.failure(IllegalStateException("Kein Speicherort verfügbar"))
+
             val target = File(targetDir, FILE_NAME)
             if (target.exists()) target.delete()
 
@@ -39,60 +41,66 @@ object ApkDownloader {
                 .setTitle("Meine Termine ${info.versionName}")
                 .setDescription("Update wird geladen")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-                .setDestinationInExternalFilesDir(
-                    context,
-                    Environment.DIRECTORY_DOWNLOADS,
-                    FILE_NAME
-                )
+                .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, FILE_NAME)
                 .setAllowedOverRoaming(false)
 
             val id = manager.enqueue(request)
+            var outcome: Result<File>? = null
 
-            while (true) {
-                val query = DownloadManager.Query().setFilterById(id)
-                manager.query(query).use { cursor ->
-                    if (!cursor.moveToFirst()) {
-                        return@withContext Result.failure(IllegalStateException("Download verschwunden"))
-                    }
-                    val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                    val soFar = cursor.getLong(
-                        cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
-                    )
-                    val total = cursor.getLong(
-                        cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
-                    ).takeIf { it > 0 } ?: info.sizeBytes
-
-                    if (total > 0) onProgress((soFar.toFloat() / total).coerceIn(0f, 1f))
-
-                    when (status) {
-                        DownloadManager.STATUS_SUCCESSFUL -> {
-                            onProgress(1f)
-                            return@withContext Result.success(target)
-                        }
-                        DownloadManager.STATUS_FAILED -> {
-                            val reason = cursor.getInt(
-                                cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)
-                            )
-                            return@withContext Result.failure(
-                                IllegalStateException("Download fehlgeschlagen (Code $reason)")
-                            )
-                        }
-                    }
-                }
-                delay(300)
+            while (outcome == null) {
+                outcome = pollOnce(manager, id, info, target, onProgress)
+                if (outcome == null) delay(POLL_INTERVAL_MS)
             }
+
+            outcome
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+    /**
+     * Ein Blick in die Download-Warteschlange.
+     * Rueckgabe null bedeutet: laeuft noch, bitte spaeter nochmal schauen.
+     */
+    private fun pollOnce(
+        manager: DownloadManager,
+        id: Long,
+        info: UpdateInfo,
+        target: File,
+        onProgress: (Float) -> Unit
+    ): Result<File>? {
+        val cursor = manager.query(DownloadManager.Query().setFilterById(id))
+            ?: return Result.failure(IllegalStateException("Download nicht auffindbar"))
+
+        cursor.use { c ->
+            if (!c.moveToFirst()) {
+                return Result.failure(IllegalStateException("Download verschwunden"))
+            }
+
+            val status = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            val soFar = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+            val reported = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+            val total = if (reported > 0) reported else info.sizeBytes
+
+            if (total > 0) onProgress((soFar.toFloat() / total).coerceIn(0f, 1f))
+
+            return when (status) {
+                DownloadManager.STATUS_SUCCESSFUL -> {
+                    onProgress(1f)
+                    Result.success(target)
+                }
+                DownloadManager.STATUS_FAILED -> {
+                    val reason = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                    Result.failure(IllegalStateException("Download fehlgeschlagen (Code $reason)"))
+                }
+                else -> null
+            }
+        }
+    }
+
     /** Oeffnet den System-Installer fuer die geladene APK. */
     fun install(context: Context, apk: File) {
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            apk
-        )
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apk)
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
