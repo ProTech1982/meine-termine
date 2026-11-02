@@ -8,6 +8,13 @@ plugins {
 val appVersionName: String = (project.findProperty("appVersionName") as String?) ?: "1.0.0"
 val appVersionCode: Int = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 1
 
+// Damit sich eine neue Version ueber die vorherige legen laesst, muss jede APK
+// mit demselben Schluessel signiert sein. Der Schluessel kommt aus einem
+// GitHub-Secret und liegt nicht im Repository.
+val keystoreFile = rootProject.file("keystore/meine-termine.jks")
+val keystorePassword: String? = System.getenv("KEYSTORE_PASSWORD")
+val signingReady = keystoreFile.exists() && !keystorePassword.isNullOrBlank()
+
 android {
     namespace = "de.protech.termine"
     compileSdk = 35
@@ -23,13 +30,26 @@ android {
         buildConfigField("String", "UPDATE_REPO", "\"ProTech1982/meine-termine\"")
     }
 
+    if (signingReady) {
+        signingConfigs.create("shared") {
+            storeFile = keystoreFile
+            storePassword = keystorePassword
+            keyAlias = System.getenv("KEY_ALIAS") ?: "meinetermine"
+            keyPassword = keystorePassword
+        }
+    }
+
     buildTypes {
+        debug {
+            if (signingReady) signingConfig = signingConfigs.getByName("shared")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (signingReady) signingConfig = signingConfigs.getByName("shared")
         }
     }
 

@@ -33,16 +33,37 @@ jobs:
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Debug-APK bauen
+      - name: Signaturschlüssel bereitstellen
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
         run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace \
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::Das Secret KEYSTORE_B64 fehlt. Ohne festen Schlüssel lässt sich kein Update über eine bestehende Installation legen."
+            exit 1
+          fi
+          mkdir -p keystore
+          printf '%s' "$KEYSTORE_B64" | base64 -d > keystore/meine-termine.jks
+
+      - name: APK bauen
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: meinetermine
+        run: |
+          ./gradlew assembleRelease --no-daemon --stacktrace \
             -PappVersionName=${{ steps.version.outputs.name }} \
             -PappVersionCode=${{ steps.version.outputs.code }}
+
+      - name: Signatur prüfen
+        continue-on-error: true
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort | tail -1)
+          "$APKSIGNER" verify --print-certs \
+            app/build/outputs/apk/release/app-release.apk | grep -i "SHA-256"
 
       - name: APK umbenennen
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/app-debug.apk \
+          cp app/build/outputs/apk/release/app-release.apk \
              out/meine-termine-${{ steps.version.outputs.name }}.apk
 
       - name: APK als Artefakt hochladen

@@ -9,3 +9,6 @@ captures/
 .cxx/
 *.apk
 *.keystore
+
+# Signaturschluessel: kommt im CI aus dem Secret, liegt nie im Repo
+keystore/

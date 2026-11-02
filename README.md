@@ -44,6 +44,26 @@ Die Versionsnummer vergibt GitHub Actions automatisch als `1.0.<Build-Nummer>`,
 jeder Push auf `main` erzeugt also ein neues Release, das die App findet. Unten
 in der Terminliste steht immer, welche Version gerade installiert ist.
 
+## Signatur – wichtig für Updates
+
+Android legt eine neue Version nur dann über eine bestehende Installation, wenn
+beide mit **demselben Schlüssel** signiert sind. Ein Debug-Build erzeugt auf
+jedem Rechner einen neuen Zufallsschlüssel – damit würde jedes Update an
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` scheitern.
+
+Deshalb baut der Workflow signierte Release-APKs mit einem festen Schlüssel aus
+zwei GitHub-Secrets:
+
+| Secret | Inhalt |
+|---|---|
+| `KEYSTORE_B64` | der Keystore `meine-termine.jks`, base64-kodiert |
+| `KEYSTORE_PASSWORD` | das Passwort des Keystores |
+
+Der Keystore selbst liegt **nicht** im Repository (siehe `.gitignore`). Er
+gehört gesichert aufbewahrt: Geht er verloren, lässt sich keine Aktualisierung
+mehr über eine bestehende Installation legen – dann hilft nur Deinstallieren
+und Neuinstallieren, und die eingetragenen Termine sind weg.
+
 ## APK bekommen
 
 Bei jedem Push auf `main` baut GitHub Actions die APK automatisch:
