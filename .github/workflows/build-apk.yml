@@ -1,0 +1,54 @@
+name: APK bauen
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: JDK 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Debug-APK bauen
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: APK umbenennen
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/debug/app-debug.apk out/meine-termine.apk
+
+      - name: APK als Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: meine-termine-apk
+          path: out/meine-termine.apk
+          retention-days: 90
+
+      - name: Release aktualisieren
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Aktuelle Version
+          body: |
+            Automatisch gebaute Debug-APK vom letzten Push auf main.
+            Direkt auf dem Handy herunterladen und installieren
+            (Installation aus unbekannten Quellen muss erlaubt sein).
+          files: out/meine-termine.apk
+          prerelease: false
