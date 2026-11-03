@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -271,12 +272,11 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
     val appointment = full.appointment
 
     AppCard(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         container = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier
@@ -290,6 +290,21 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(Modifier.weight(1f))
+                // Geaendert wird nur ueber dieses Symbol, damit man die
+                // Karte nicht aus Versehen oeffnet.
+                IconButton(
+                    onClick = onClick,
+                    modifier = Modifier
+                        .offset(x = 10.dp)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Termin ändern",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             // Zuerst die Kategorie, darunter der Termin, darunter der
@@ -385,12 +400,12 @@ private fun AppointmentRow(
     val accent = full.category?.let { Color(it.colorArgb) } ?: MaterialTheme.colorScheme.primary
     val alpha = if (dimmed) 0.55f else 1f
 
-    AppCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 76.dp)
-                .padding(12.dp),
+                .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Datumsplakette links – macht die Liste auf einen Blick lesbar.
@@ -454,6 +469,16 @@ private fun AppointmentRow(
                     contentDescription = "Erinnerung gesetzt",
                     modifier = Modifier.size(17.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Nur dieses Symbol oeffnet den Termin zum Bearbeiten.
+            IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Termin ändern",
+                    modifier = Modifier.size(19.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
                 )
             }
         }
