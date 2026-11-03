@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
@@ -40,6 +41,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +55,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import de.protech.termine.look.AppCard
+import de.protech.termine.look.fieldShape
 import de.protech.termine.BuildConfig
 import de.protech.termine.update.UpdateInfo
 import de.protech.termine.update.UpdateResult
@@ -81,6 +86,7 @@ fun SettingsScreen(
     status: SetupStatus,
     onBack: () -> Unit,
     onCategories: () -> Unit,
+    onAppearance: () -> Unit,
     onLegal: () -> Unit,
     onFixNotifications: () -> Unit,
     onFixExactAlarms: () -> Unit,
@@ -91,9 +97,11 @@ fun SettingsScreen(
     var updateState by remember { mutableStateOf<UpdateState>(UpdateState.Idle) }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Einstellungen") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
@@ -144,6 +152,24 @@ fun SettingsScreen(
                 )
             }
 
+            /* --- Darstellung --- */
+            SettingsCard(
+                title = "Darstellung",
+                subtitle = "Helligkeit, Akzentfarbe, Kachelform, Deckkraft und Muster."
+            ) {
+                OutlinedButton(
+                    onClick = onAppearance,
+                    shape = fieldShape(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(Icons.Default.Palette, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Text("Aussehen anpassen")
+                }
+            }
+
             /* --- Kategorien --- */
             SettingsCard(
                 title = "Kategorien",
@@ -151,7 +177,7 @@ fun SettingsScreen(
             ) {
                 OutlinedButton(
                     onClick = onCategories,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -187,7 +213,7 @@ fun SettingsScreen(
                         }
                     },
                     enabled = updateState !is UpdateState.Checking,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -235,7 +261,7 @@ fun SettingsScreen(
                 Spacer(Modifier.height(14.dp))
                 OutlinedButton(
                     onClick = onLegal,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -341,14 +367,7 @@ private fun SettingsCard(
     content: @Composable () -> Unit
 ) {
     Spacer(Modifier.height(14.dp))
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    AppCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 text = title,

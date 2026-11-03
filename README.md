@@ -48,9 +48,23 @@ Zeitumstellung automatisch neu gesetzt. Genau daran scheitern viele Apps.
 - Kategorien mit Namen und Farbe frei verwalten
 - Update-Suche
 
+**Darstellung**
+
+- Helligkeit frei wählbar: hell, dunkel oder der Systemeinstellung folgend
+- Zehn Akzentfarben von Petrol bis Gold, oder die Systemfarben ab Android 12
+- Kachelform in drei Stufen: kantig, weich, rund
+- Deckkraft der Kacheln regelbar – darunter scheint der Hintergrund durch
+- Zehn Hintergrundmuster in drei Gruppen, in ihrer Stärke regelbar
+  - *Dezent:* Punkte, Raster, Karo, Höhenlinien
+  - *Geometrisch:* Schräge, Zickzack, Waben, Kreuze
+  - *Lebhaft:* Wellen, Konfetti
+- Die Muster werden berechnet, nicht als Bilder mitgeliefert: sie passen sich
+  jeder Akzentfarbe an und wiegen nichts
+- Vorschaukachel oben zeigt sofort, wie alles zusammen wirkt
+
 **Sonst**
 
-- Material 3, dunkles Design, ab Android 12 auf Wunsch mit den Systemfarben
+- Material 3 durchgehend
 - Komplett offline, keine Konten, keine Cloud, keine Werbung
 
 ## Updates – prüfen in der App, laden im Browser

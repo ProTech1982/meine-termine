@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import de.protech.termine.look.AppBackground
+import de.protech.termine.look.LocalAppearance
+import de.protech.termine.ui.AppearanceScreen
 import de.protech.termine.ui.CategoryScreen
 import de.protech.termine.ui.EditScreen
 import de.protech.termine.ui.HomeScreen
@@ -57,14 +61,20 @@ class MainActivity : ComponentActivity() {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-        setContent {
-            MeineTermineTheme {
-                val navController = rememberNavController()
-                val viewModel: TermineViewModel = viewModel()
-                var hintDismissed by remember { mutableStateOf(false) }
-                val setup by status
+        val store = (application as TermineApp).appearance
 
-                NavHost(navController = navController, startDestination = "start") {
+        setContent {
+            val look = store.value
+
+            MeineTermineTheme(look = look) {
+                CompositionLocalProvider(LocalAppearance provides look) {
+                    AppBackground {
+                        val navController = rememberNavController()
+                        val viewModel: TermineViewModel = viewModel()
+                        var hintDismissed by remember { mutableStateOf(false) }
+                        val setup by status
+
+                        NavHost(navController = navController, startDestination = "start") {
                     composable("start") {
                         HomeScreen(
                             viewModel = viewModel,
@@ -91,6 +101,7 @@ class MainActivity : ComponentActivity() {
                             status = setup,
                             onBack = { navController.popBackStack() },
                             onCategories = { navController.navigate("kategorien") },
+                            onAppearance = { navController.navigate("darstellung") },
                             onLegal = { navController.navigate("rechtliches") },
                             onFixNotifications = { openNotificationSettings() },
                             onFixExactAlarms = { openExactAlarmSettings() },
@@ -105,6 +116,21 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             onBack = { navController.popBackStack() }
                         )
+                    }
+                    composable("darstellung") {
+                        AppearanceScreen(
+                            onBack = { navController.popBackStack() },
+                            onThemeMode = store::setThemeMode,
+                            onAccent = store::setAccent,
+                            onSystemColors = store::setUseSystemColors,
+                            onShape = store::setShape,
+                            onOpacity = store::setOpacity,
+                            onPattern = store::setPattern,
+                            onPatternStrength = store::setPatternStrength,
+                            onReset = store::reset
+                        )
+                    }
+                        }
                     }
                 }
             }

@@ -62,6 +62,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.protech.termine.look.AppCard
+import de.protech.termine.look.LocalAppearance
+import de.protech.termine.look.cardShape
+import de.protech.termine.look.fieldShape
 import de.protech.termine.data.AppointmentFull
 import de.protech.termine.data.Category
 
@@ -81,9 +85,14 @@ fun HomeScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = Color.Transparent,
         topBar = {
             LargeTopAppBar(
                 title = { Text("Meine Termine") },
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent
+                ),
                 actions = {
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Einstellungen")
@@ -255,15 +264,11 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
     val accent = full.category?.let { Color(it.colorArgb) } ?: MaterialTheme.colorScheme.primary
     val appointment = full.appointment
 
-    Card(
+    AppCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        container = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     ) {
         Column(Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -370,15 +375,7 @@ private fun AppointmentRow(
     val accent = full.category?.let { Color(it.colorArgb) } ?: MaterialTheme.colorScheme.primary
     val alpha = if (dimmed) 0.55f else 1f
 
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    AppCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -388,7 +385,7 @@ private fun AppointmentRow(
         ) {
             // Datumsplakette links – macht die Liste auf einen Blick lesbar.
             Surface(
-                shape = RoundedCornerShape(14.dp),
+                shape = fieldShape(),
                 color = accent.copy(alpha = if (dimmed) 0.10f else 0.16f),
                 modifier = Modifier.size(52.dp)
             ) {
@@ -455,15 +452,10 @@ private fun AppointmentRow(
 private fun EmptyState(hasFilter: Boolean, loaded: Boolean) {
     if (!loaded) return
 
-    Card(
+    AppCard(
         Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .padding(top = 8.dp)
     ) {
         Column(
             modifier = Modifier
@@ -498,14 +490,10 @@ private fun EmptyState(hasFilter: Boolean, loaded: Boolean) {
 
 @Composable
 private fun SetupHintCard(onFix: () -> Unit, onDismiss: () -> Unit) {
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        container = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer
     ) {
         Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

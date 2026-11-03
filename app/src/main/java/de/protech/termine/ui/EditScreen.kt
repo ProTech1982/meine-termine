@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -64,6 +65,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.protech.termine.look.AppCard
+import de.protech.termine.look.fieldShape
 import de.protech.termine.data.Appointment
 import de.protech.termine.data.Category
 import java.time.Instant
@@ -121,9 +124,11 @@ fun EditScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(if (isNew) "Neuer Termin" else "Termin ändern") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
@@ -188,7 +193,7 @@ fun EditScreen(
                     label = { Text("Bezeichnung") },
                     placeholder = { Text("z. B. Kontrolle oder Blutabnahme") },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -233,7 +238,7 @@ fun EditScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(
                         onClick = { showDatePicker = true },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = fieldShape(),
                         modifier = Modifier
                             .weight(1.4f)
                             .height(52.dp)
@@ -244,7 +249,7 @@ fun EditScreen(
                     }
                     OutlinedButton(
                         onClick = { showTimePicker = true },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = fieldShape(),
                         modifier = Modifier
                             .weight(1f)
                             .height(52.dp)
@@ -313,7 +318,7 @@ fun EditScreen(
                     onValueChange = { location = it },
                     label = { Text("Ort oder Praxis") },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(12.dp))
@@ -323,7 +328,7 @@ fun EditScreen(
                     label = { Text("Notizen") },
                     placeholder = { Text("Überweisung, Nüchtern kommen, Karte mitnehmen …") },
                     minLines = 3,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -426,14 +431,7 @@ private fun Section(
     content: @Composable () -> Unit
 ) {
     Spacer(Modifier.height(14.dp))
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
+    AppCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 text = title,
@@ -506,7 +504,7 @@ private fun CustomReminderDialog(
                     label = { Text("Wie viel vorher?") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = fieldShape(),
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(12.dp))

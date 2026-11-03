@@ -11,6 +11,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import de.protech.termine.look.Appearance
+import de.protech.termine.look.ThemeMode
+import de.protech.termine.look.luminanceIsDark
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -106,17 +109,36 @@ private val AppTypography = Typography().let { base ->
 
 @Composable
 fun MeineTermineTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    look: Appearance = Appearance(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+    val darkTheme = when (look.themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+
+    val base = when {
+        look.useSystemColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColors
         else -> LightColors
+    }
+
+    // Die gewaehlte Akzentfarbe ueberschreibt den Grundton. Im dunklen Modus
+    // wird sie aufgehellt, sonst verschwindet ein kraeftiger Ton im Hintergrund.
+    val colorScheme = if (look.useSystemColors) base else {
+        val accent = if (darkTheme) look.accent.lighten(0.42f) else look.accent
+        val onAccent = if (accent.luminanceIsDark()) Color.White else Color(0xFF10201C)
+        base.copy(
+            primary = accent,
+            onPrimary = onAccent,
+            primaryContainer = if (darkTheme) look.accent.darken(0.32f) else accent.lighten(0.80f),
+            onPrimaryContainer = if (darkTheme) accent.lighten(0.55f) else look.accent.darken(0.55f),
+            surfaceTint = accent
+        )
     }
 
     MaterialTheme(
@@ -125,3 +147,19 @@ fun MeineTermineTheme(
         content = content
     )
 }
+
+/** Mischt in Richtung Weiss. */
+private fun Color.lighten(amount: Float): Color = Color(
+    red = red + (1f - red) * amount,
+    green = green + (1f - green) * amount,
+    blue = blue + (1f - blue) * amount,
+    alpha = alpha
+)
+
+/** Mischt in Richtung Schwarz. */
+private fun Color.darken(amount: Float): Color = Color(
+    red = red * (1f - amount),
+    green = green * (1f - amount),
+    blue = blue * (1f - amount),
+    alpha = alpha
+)
