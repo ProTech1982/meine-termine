@@ -65,6 +65,21 @@ Nach dem Push: auf den Workflow warten, dann das Release prüfen.
 Ohne gültigen Keystore wird nur debug-signiert – solche APKs lassen sich
 nicht über eine signierte Version legen.
 
+## Vor dem Pushen pruefen
+
+Ein gruener Build heisst hier **nicht**, dass die App laeuft - gebaut, aber
+nie gestartet. Deshalb laeuft in der Action vor dem Bauen:
+
+- `python3 tools/pruefe-datenbank.py` - prueft, dass zu jeder Room-Version
+  eine Migration vorliegt, dass `addMigrations(...)` aufgerufen wird und dass
+  **kein** `fallbackToDestructiveMigration` benutzt wird. Letzteres wuerde
+  beim Update die Termine des Nutzers loeschen. Room meldet eine fehlende
+  Migration erst beim Start auf einem Geraet, auf dem schon Daten liegen -
+  auf einer Neuinstallation faellt es nie auf.
+- Grundsaetzlich: Alles, was erst zur Laufzeit geprueft wird, faellt im Build
+  nicht auf. Im Zweifel einen Pruefschritt in `tools/` dazulegen, statt sich
+  auf den gruenen Haken zu verlassen.
+
 ## Absichtliche Entscheidungen (nicht versehentlich so)
 
 - **`AlarmManager.setAlarmClock()`** statt normaler Alarme. Nur diese sind
@@ -93,9 +108,21 @@ nicht über eine signierte Version legen.
 
 ## Stand
 
-**3. November 2026, Version 1.0.12**
+**3. November 2026, Version 1.0.14**
 
 Zuletzt gemacht:
+
+- 1.0.14: **Kennzeichen** - ein Zusatzschild neben der Kategorie, zum
+  Beispiel "Labor" neben "Diabetologe". Ein Termin kann mehrere tragen;
+  angezeigt werden sie alphabetisch (`AppointmentFull.sortedMarkers`), als
+  umrandete Pille in eigener Farbe (`MarkerPill` in `HomeScreen.kt`), damit
+  die gefuellte Kategorie die Hauptsache bleibt.
+  Datenbank auf Version 2: neue Tabellen `markers` und `appointment_markers`
+  (Verknuepfung ueber `@Junction`), Migration in `data/Migrations.kt`.
+  Auswahl im `EditScreen`, Verwaltung in `MarkerScreen.kt` (wie
+  `CategoryScreen`), zweite Filterreihe in der Uebersicht, die sich mit dem
+  Kategoriefilter kombinieren laesst. Vorgaben: Arzttermin, Blutprobe,
+  Kontrolle, Labor.
 
 - 1.0.6: Seite „Darstellung" mit Helligkeit, 10 Akzentfarben, Kachelform,
   Deckkraft und 10 gerechneten Hintergrundmustern; gemeinsame Kachel `AppCard`
