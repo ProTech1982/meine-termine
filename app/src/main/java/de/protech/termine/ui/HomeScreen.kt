@@ -61,6 +61,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.ColorUtils
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -298,24 +300,57 @@ private fun MarkerFilterRow(
  * umrandet statt gefuellt, damit die Kategorie die Hauptsache bleibt.
  */
 @Composable
-private fun MarkerPill(marker: Marker, small: Boolean = false, alpha: Float = 1f) {
-    val accent = Color(marker.colorArgb).copy(alpha = alpha)
+private fun MarkerPill(
+    marker: Marker,
+    background: Color,
+    small: Boolean = false,
+    alpha: Float = 1f
+) {
+    val own = Color(marker.colorArgb)
+    // Eine zarte Fuellung in der eigenen Farbe und dafuer ein Text, der auf
+    // dem jeweiligen Untergrund wirklich lesbar ist. Die reine Farbe als
+    // Schriftfarbe war bei dunklen Toenen kaum zu entziffern.
+    val fill = own.copy(alpha = 0.14f * alpha)
+    val onFill = readableOn(own, background)
+
     Surface(
         shape = RoundedCornerShape(50),
-        color = Color.Transparent,
-        border = BorderStroke(1.dp, accent.copy(alpha = alpha * 0.7f))
+        color = fill,
+        border = BorderStroke(1.dp, onFill.copy(alpha = alpha * 0.45f))
     ) {
         Text(
             text = marker.name,
-            style = if (small) MaterialTheme.typography.labelSmall
-            else MaterialTheme.typography.labelMedium,
-            color = accent,
+            style = if (small) MaterialTheme.typography.labelMedium
+            else MaterialTheme.typography.labelLarge,
+            color = onFill.copy(alpha = alpha),
             modifier = Modifier.padding(
-                horizontal = if (small) 7.dp else 9.dp,
-                vertical = if (small) 1.dp else 3.dp
+                horizontal = if (small) 8.dp else 10.dp,
+                vertical = if (small) 2.dp else 4.dp
             )
         )
     }
+}
+
+/**
+ * Hellt oder dunkelt die Farbe so lange ab, bis sie sich vom Untergrund
+ * deutlich genug abhebt. Ohne das verschwindet ein dunkles Rot auf dunklem
+ * Grund - und ein helles Gelb auf hellem.
+ */
+private fun readableOn(color: Color, background: Color): Color {
+    val bg = background.toArgb()
+    val ziel = if (ColorUtils.calculateLuminance(bg) < 0.5) {
+        android.graphics.Color.WHITE
+    } else {
+        android.graphics.Color.BLACK
+    }
+
+    var kandidat = color.toArgb()
+    var schutz = 0
+    while (ColorUtils.calculateContrast(kandidat, bg) < 4.5 && schutz < 20) {
+        kandidat = ColorUtils.blendARGB(kandidat, ziel, 0.12f)
+        schutz++
+    }
+    return Color(kandidat)
 }
 
 @Composable
@@ -418,7 +453,12 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                             }
                         }
                     }
-                    markers.forEach { marker -> MarkerPill(marker) }
+                    markers.forEach { marker ->
+                        MarkerPill(
+                            marker = marker,
+                            background = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    }
                 }
             }
 
@@ -546,7 +586,12 @@ private fun AppointmentRow(
                             maxLines = 1
                         )
                         rowMarkers.forEach { marker ->
-                            MarkerPill(marker, small = true, alpha = alpha)
+                            MarkerPill(
+                                marker = marker,
+                                background = MaterialTheme.colorScheme.surfaceContainerLow,
+                                small = true,
+                                alpha = alpha
+                            )
                         }
                     }
                 }
