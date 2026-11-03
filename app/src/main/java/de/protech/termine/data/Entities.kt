@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Junction
 import androidx.room.Relation
 import java.time.Instant
 import java.time.LocalDateTime
@@ -62,10 +63,61 @@ data class Reminder(
     val minutesBefore: Int
 )
 
+/**
+ * Zusaetzliches Kennzeichen neben der Kategorie, zum Beispiel "Labor" oder
+ * "Blutprobe". Ein Termin kann mehrere davon tragen; angezeigt werden sie
+ * alphabetisch nach Name.
+ */
+@Entity(tableName = "markers")
+data class Marker(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val colorArgb: Int
+)
+
+/** Verbindet Termine und Kennzeichen; ein Termin kann mehrere tragen. */
+@Entity(
+    tableName = "appointment_markers",
+    primaryKeys = ["appointmentId", "markerId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Appointment::class,
+            parentColumns = ["id"],
+            childColumns = ["appointmentId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Marker::class,
+            parentColumns = ["id"],
+            childColumns = ["markerId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("appointmentId"), Index("markerId")]
+)
+data class AppointmentMarker(
+    val appointmentId: Long,
+    val markerId: Long
+)
+
 data class AppointmentFull(
     @Embedded val appointment: Appointment,
     @Relation(parentColumn = "categoryId", entityColumn = "id")
     val category: Category?,
     @Relation(parentColumn = "id", entityColumn = "appointmentId")
-    val reminders: List<Reminder>
-)
+    val reminders: List<Reminder>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = AppointmentMarker::class,
+            parentColumn = "appointmentId",
+            entityColumn = "markerId"
+        )
+    )
+    val markers: List<Marker> = emptyList()
+) {
+    /** Immer alphabetisch - so steht "Arzttermin" vor "Labor". */
+    val sortedMarkers: List<Marker>
+        get() = markers.sortedBy { it.name.lowercase() }
+}

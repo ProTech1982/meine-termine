@@ -1,12 +1,15 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 
 package de.protech.termine.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -70,6 +73,7 @@ import de.protech.termine.look.cardShape
 import de.protech.termine.look.fieldShape
 import de.protech.termine.data.AppointmentFull
 import de.protech.termine.data.Category
+import de.protech.termine.data.Marker
 
 @Composable
 fun HomeScreen(
@@ -139,10 +143,23 @@ fun HomeScreen(
                 }
             }
 
+            if (state.markers.isNotEmpty()) {
+                item(key = "marker-filter") {
+                    MarkerFilterRow(
+                        markers = state.markers,
+                        activeFilter = state.activeMarkerFilter,
+                        onSelect = viewModel::setMarkerFilter
+                    )
+                }
+            }
+
             val next = state.next
             if (next == null) {
                 item(key = "empty") {
-                    EmptyState(hasFilter = state.activeFilter != null, loaded = state.loaded)
+                    EmptyState(
+                        hasFilter = state.activeFilter != null || state.activeMarkerFilter != null,
+                        loaded = state.loaded
+                    )
                 }
             } else {
                 item(key = "next-${next.appointment.id}") {
@@ -242,6 +259,66 @@ private fun CategoryFilterRow(
 }
 
 @Composable
+private fun MarkerFilterRow(
+    markers: List<Marker>,
+    activeFilter: Long?,
+    onSelect: (Long?) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp)
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        markers.forEach { marker ->
+            val selected = activeFilter == marker.id
+            val accent = Color(marker.colorArgb)
+            FilterChip(
+                selected = selected,
+                onClick = { onSelect(if (selected) null else marker.id) },
+                label = { Text(marker.name) },
+                leadingIcon = {
+                    Box(
+                        Modifier
+                            .size(9.dp)
+                            .clip(CircleShape)
+                            .background(accent)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors()
+            )
+        }
+        Spacer(Modifier.width(4.dp))
+    }
+}
+
+/**
+ * Das Kennzeichen steht neben der Kategorie, aber bewusst anders: nur
+ * umrandet statt gefuellt, damit die Kategorie die Hauptsache bleibt.
+ */
+@Composable
+private fun MarkerPill(marker: Marker, small: Boolean = false, alpha: Float = 1f) {
+    val accent = Color(marker.colorArgb).copy(alpha = alpha)
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, accent.copy(alpha = alpha * 0.7f))
+    ) {
+        Text(
+            text = marker.name,
+            style = if (small) MaterialTheme.typography.labelSmall
+            else MaterialTheme.typography.labelMedium,
+            color = accent,
+            modifier = Modifier.padding(
+                horizontal = if (small) 7.dp else 9.dp,
+                vertical = if (small) 1.dp else 3.dp
+            )
+        )
+    }
+}
+
+@Composable
 private fun GroupHeader(label: String, count: Int) {
     Row(
         modifier = Modifier
@@ -310,29 +387,38 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
             // Zuerst die Kategorie, darunter der Termin, darunter der
             // Countdown: so weiss man beim Hinsehen, welche Art Termin
             // als naechstes ansteht, und erst dann, wie lange es noch ist.
-            full.category?.let { category ->
+            val markers = full.sortedMarkers
+            if (full.category != null || markers.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color(category.colorArgb).copy(alpha = 0.18f),
-                    modifier = Modifier.offset(x = (-9).dp)
+                FlowRow(
+                    modifier = Modifier.offset(x = (-9).dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            Modifier
-                                .size(9.dp)
-                                .clip(CircleShape)
-                                .background(Color(category.colorArgb))
-                        )
-                        Spacer(Modifier.width(7.dp))
-                        Text(
-                            text = category.name,
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                    full.category?.let { category ->
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = Color(category.colorArgb).copy(alpha = 0.18f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(9.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(category.colorArgb))
+                                )
+                                Spacer(Modifier.width(7.dp))
+                                Text(
+                                    text = category.name,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
                     }
+                    markers.forEach { marker -> MarkerPill(marker) }
                 }
             }
 
@@ -440,12 +526,30 @@ private fun AppointmentRow(
                     add("${formatTime(appointment.startMillis)} Uhr")
                     full.category?.let { add(it.name) }
                 }.joinToString(" · ")
-                Text(
-                    text = lead,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = accent.copy(alpha = alpha),
-                    maxLines = 1
-                )
+                val rowMarkers = full.sortedMarkers
+                if (rowMarkers.isEmpty()) {
+                    Text(
+                        text = lead,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = accent.copy(alpha = alpha),
+                        maxLines = 1
+                    )
+                } else {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = lead,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = accent.copy(alpha = alpha),
+                            maxLines = 1
+                        )
+                        rowMarkers.forEach { marker ->
+                            MarkerPill(marker, small = true, alpha = alpha)
+                        }
+                    }
+                }
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = appointment.title,

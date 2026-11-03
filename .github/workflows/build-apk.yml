@@ -44,6 +44,9 @@ jobs:
           mkdir -p keystore
           printf '%s' "$KEYSTORE_B64" | base64 -d > keystore/meine-termine.jks
 
+      - name: Datenbank pruefen
+        run: python3 tools/pruefe-datenbank.py
+
       - name: APK bauen
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

@@ -70,6 +70,7 @@ import de.protech.termine.look.AppCard
 import de.protech.termine.look.fieldShape
 import de.protech.termine.data.Appointment
 import de.protech.termine.data.Category
+import de.protech.termine.data.Marker
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -84,6 +85,7 @@ fun EditScreen(
 ) {
     val isNew = appointmentId == 0L
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val markers by viewModel.markers.collectAsStateWithLifecycle()
     val existing by viewModel.appointment(appointmentId)
         .collectAsStateWithLifecycle(initialValue = null)
 
@@ -96,6 +98,7 @@ fun EditScreen(
         mutableStateOf(LocalDateTime.now().plusDays(1).withMinute(0).withSecond(0).withNano(0))
     }
     val reminders = remember { mutableStateListOf<Int>() }
+    val chosenMarkers = remember { mutableStateListOf<Long>() }
 
     LaunchedEffect(existing) {
         val full = existing
@@ -108,6 +111,8 @@ fun EditScreen(
                 .atZone(ZoneId.systemDefault()).toLocalDateTime()
             reminders.clear()
             reminders.addAll(full.reminders.map { it.minutesBefore }.sorted())
+            chosenMarkers.clear()
+            chosenMarkers.addAll(full.markers.map { it.id })
             loaded = true
         }
     }
@@ -162,6 +167,7 @@ fun EditScreen(
                                 notes = notes.trim()
                             ),
                             reminders.toList(),
+                            chosenMarkers.toList(),
                             onDone = onBack
                         )
                     },
@@ -217,6 +223,40 @@ fun EditScreen(
                                 selected = categoryId == category.id,
                                 onClick = {
                                     categoryId = if (categoryId == category.id) null else category.id
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (markers.isNotEmpty()) {
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "Kennzeichen",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Mehrere moeglich; sie stehen alphabetisch neben der Kategorie.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        markers.forEach { marker ->
+                            MarkerChip(
+                                marker = marker,
+                                selected = chosenMarkers.contains(marker.id),
+                                onClick = {
+                                    if (chosenMarkers.contains(marker.id)) {
+                                        chosenMarkers.remove(marker.id)
+                                    } else {
+                                        chosenMarkers.add(marker.id)
+                                    }
                                 }
                             )
                         }
@@ -467,6 +507,23 @@ private fun CategoryChip(category: Category, selected: Boolean, onClick: () -> U
                     .size(11.dp)
                     .clip(CircleShape)
                     .background(Color(category.colorArgb))
+            )
+        }
+    )
+}
+
+@Composable
+private fun MarkerChip(marker: Marker, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(marker.name) },
+        leadingIcon = {
+            Box(
+                Modifier
+                    .size(11.dp)
+                    .clip(CircleShape)
+                    .background(Color(marker.colorArgb))
             )
         }
     )

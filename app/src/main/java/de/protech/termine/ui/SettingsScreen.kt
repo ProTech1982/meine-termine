@@ -86,6 +86,7 @@ fun SettingsScreen(
     status: SetupStatus,
     onBack: () -> Unit,
     onCategories: () -> Unit,
+    onMarkers: () -> Unit,
     onAppearance: () -> Unit,
     onLegal: () -> Unit,
     onFixNotifications: () -> Unit,
@@ -185,6 +186,24 @@ fun SettingsScreen(
                     Icon(Icons.Default.Label, contentDescription = null, Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
                     Text("Kategorien verwalten")
+                }
+            }
+
+            /* --- Kennzeichen --- */
+            SettingsCard(
+                title = "Kennzeichen",
+                subtitle = "Zusatzschilder neben der Kategorie, etwa \"Labor\" oder \"Blutprobe\"."
+            ) {
+                OutlinedButton(
+                    onClick = onMarkers,
+                    shape = fieldShape(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(Icons.Default.Label, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Text("Kennzeichen verwalten")
                 }
             }
 

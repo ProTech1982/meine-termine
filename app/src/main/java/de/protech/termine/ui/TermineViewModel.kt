@@ -7,6 +7,7 @@ import de.protech.termine.TermineApp
 import de.protech.termine.data.Appointment
 import de.protech.termine.data.AppointmentFull
 import de.protech.termine.data.Category
+import de.protech.termine.data.Marker
 import de.protech.termine.data.TermineRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +28,9 @@ data class HomeUiState(
     val agenda: List<AgendaItem> = emptyList(),
     val past: List<AppointmentFull> = emptyList(),
     val categories: List<Category> = emptyList(),
+    val markers: List<Marker> = emptyList(),
     val activeFilter: Long? = null,
+    val activeMarkerFilter: Long? = null,
     val totalUpcoming: Int = 0,
     val loaded: Boolean = false
 )
@@ -39,10 +42,22 @@ class TermineViewModel(app: Application) : AndroidViewModel(app) {
     private val filter = MutableStateFlow<Long?>(null)
     val activeFilter: StateFlow<Long?> = filter.asStateFlow()
 
+    private val markerFilter = MutableStateFlow<Long?>(null)
+
     val uiState: StateFlow<HomeUiState> =
-        combine(repository.appointments, repository.categories, filter) { all, categories, active ->
+        combine(
+            repository.appointments,
+            repository.categories,
+            repository.markers,
+            filter,
+            markerFilter
+        ) { all, categories, markers, active, activeMarker ->
             val now = System.currentTimeMillis()
-            val visible = all.filter { active == null || it.appointment.categoryId == active }
+            val visible = all
+                .filter { active == null || it.appointment.categoryId == active }
+                .filter { entry ->
+                    activeMarker == null || entry.markers.any { it.id == activeMarker }
+                }
 
             val upcoming = visible
                 .filter { it.appointment.startMillis >= now }
@@ -72,7 +87,9 @@ class TermineViewModel(app: Application) : AndroidViewModel(app) {
                 agenda = agenda,
                 past = past,
                 categories = categories,
+                markers = markers,
                 activeFilter = active,
+                activeMarkerFilter = activeMarker,
                 totalUpcoming = upcoming.size,
                 loaded = true
             )
@@ -81,15 +98,27 @@ class TermineViewModel(app: Application) : AndroidViewModel(app) {
     val categories: StateFlow<List<Category>> =
         repository.categories.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val markers: StateFlow<List<Marker>> =
+        repository.markers.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     fun setFilter(categoryId: Long?) {
         filter.value = categoryId
     }
 
+    fun setMarkerFilter(markerId: Long?) {
+        markerFilter.value = markerId
+    }
+
     fun appointment(id: Long) = repository.appointment(id)
 
-    fun save(appointment: Appointment, minutesBefore: List<Int>, onDone: () -> Unit = {}) {
+    fun save(
+        appointment: Appointment,
+        minutesBefore: List<Int>,
+        markerIds: List<Long> = emptyList(),
+        onDone: () -> Unit = {}
+    ) {
         viewModelScope.launch {
-            repository.save(appointment, minutesBefore)
+            repository.save(appointment, minutesBefore, markerIds)
             onDone()
         }
     }
@@ -113,6 +142,21 @@ class TermineViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             repository.deleteCategory(id)
             if (filter.value == id) filter.value = null
+        }
+    }
+
+    fun addMarker(name: String, colorArgb: Int) {
+        viewModelScope.launch { repository.addMarker(name, colorArgb) }
+    }
+
+    fun updateMarker(marker: Marker) {
+        viewModelScope.launch { repository.updateMarker(marker) }
+    }
+
+    fun deleteMarker(id: Long) {
+        viewModelScope.launch {
+            repository.deleteMarker(id)
+            if (markerFilter.value == id) markerFilter.value = null
         }
     }
 }

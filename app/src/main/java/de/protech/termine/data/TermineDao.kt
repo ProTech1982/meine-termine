@@ -66,4 +66,30 @@ interface TermineDao {
 
     @Query("DELETE FROM categories WHERE id = :id")
     suspend fun deleteCategoryById(id: Long)
+
+    /* --- Kennzeichen --- */
+
+    @Query("SELECT * FROM markers ORDER BY name COLLATE NOCASE ASC")
+    fun observeMarkers(): Flow<List<Marker>>
+
+    @Query("SELECT COUNT(*) FROM markers")
+    suspend fun markerCount(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMarker(marker: Marker): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMarkers(markers: List<Marker>)
+
+    @Update
+    suspend fun updateMarker(marker: Marker)
+
+    @Query("DELETE FROM markers WHERE id = :id")
+    suspend fun deleteMarkerById(id: Long)
+
+    @Query("DELETE FROM appointment_markers WHERE appointmentId = :appointmentId")
+    suspend fun clearMarkersFor(appointmentId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun linkMarkers(links: List<AppointmentMarker>)
 }

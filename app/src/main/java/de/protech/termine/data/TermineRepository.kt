@@ -11,6 +11,7 @@ class TermineRepository(
 
     val appointments: Flow<List<AppointmentFull>> = dao.observeAll()
     val categories: Flow<List<Category>> = dao.observeCategories()
+    val markers: Flow<List<Marker>> = dao.observeMarkers()
 
     fun appointment(id: Long): Flow<AppointmentFull?> = dao.observeOne(id)
 
@@ -19,11 +20,20 @@ class TermineRepository(
         dao.insertCategories(DEFAULT_CATEGORIES)
     }
 
+    suspend fun seedMarkersIfEmpty() {
+        if (dao.markerCount() > 0) return
+        dao.insertMarkers(DEFAULT_MARKERS)
+    }
+
     /**
      * Speichert einen Termin samt Erinnerungen und setzt die Alarme neu.
      * Gibt die ID des Termins zurueck.
      */
-    suspend fun save(appointment: Appointment, minutesBefore: List<Int>): Long {
+    suspend fun save(
+        appointment: Appointment,
+        minutesBefore: List<Int>,
+        markerIds: List<Long> = emptyList()
+    ): Long {
         val id: Long
         if (appointment.id == 0L) {
             id = dao.insertAppointment(appointment)
@@ -37,6 +47,12 @@ class TermineRepository(
         val distinct = minutesBefore.distinct().sorted()
         if (distinct.isNotEmpty()) {
             dao.insertReminders(distinct.map { Reminder(appointmentId = id, minutesBefore = it) })
+        }
+
+        dao.clearMarkersFor(id)
+        val distinctMarkers = markerIds.distinct()
+        if (distinctMarkers.isNotEmpty()) {
+            dao.linkMarkers(distinctMarkers.map { AppointmentMarker(id, it) })
         }
 
         val saved = dao.getOne(id)
@@ -62,6 +78,14 @@ class TermineRepository(
 
     suspend fun deleteCategory(id: Long) = dao.deleteCategoryById(id)
 
+    suspend fun addMarker(name: String, colorArgb: Int) {
+        dao.insertMarker(Marker(name = name, colorArgb = colorArgb))
+    }
+
+    suspend fun updateMarker(marker: Marker) = dao.updateMarker(marker)
+
+    suspend fun deleteMarker(id: Long) = dao.deleteMarkerById(id)
+
     companion object {
         val DEFAULT_CATEGORIES = listOf(
             Category(name = "Hausarzt", colorArgb = 0xFF2E7D32.toInt(), sortOrder = 1),
@@ -72,6 +96,14 @@ class TermineRepository(
             Category(name = "Physiotherapie", colorArgb = 0xFF00838F.toInt(), sortOrder = 6),
             Category(name = "Labor / Blutabnahme", colorArgb = 0xFFAD1457.toInt(), sortOrder = 7),
             Category(name = "Sonstiges", colorArgb = 0xFF455A64.toInt(), sortOrder = 8)
+        )
+
+        /** Vorgaben; eigene Kennzeichen lassen sich jederzeit anlegen. */
+        val DEFAULT_MARKERS = listOf(
+            Marker(name = "Arzttermin", colorArgb = 0xFF00695C.toInt()),
+            Marker(name = "Blutprobe", colorArgb = 0xFFB71C1C.toInt()),
+            Marker(name = "Kontrolle", colorArgb = 0xFF4527A0.toInt()),
+            Marker(name = "Labor", colorArgb = 0xFF1565C0.toInt())
         )
     }
 }

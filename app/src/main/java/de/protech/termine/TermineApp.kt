@@ -26,6 +26,7 @@ class TermineApp : Application() {
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             repository.seedCategoriesIfEmpty()
+            repository.seedMarkersIfEmpty()
             repository.rescheduleAll()
         }
     }

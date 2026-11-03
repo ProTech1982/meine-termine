@@ -6,8 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [Appointment::class, Category::class, Reminder::class],
-    version = 1,
+    entities = [
+        Appointment::class,
+        Category::class,
+        Reminder::class,
+        Marker::class,
+        AppointmentMarker::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class TermineDatabase : RoomDatabase() {
@@ -24,7 +30,12 @@ abstract class TermineDatabase : RoomDatabase() {
                     context.applicationContext,
                     TermineDatabase::class.java,
                     "termine.db"
-                ).build().also { INSTANCE = it }
+                )
+                    // Bestehende Termine muessen ein Update ueberleben,
+                    // deshalb echte Migrationen statt Neuanlegen.
+                    .addMigrations(*Migrations.ALL)
+                    .build()
+                    .also { INSTANCE = it }
             }
     }
 }
