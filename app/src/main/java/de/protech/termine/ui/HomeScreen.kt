@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -275,7 +276,7 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
         container = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     ) {
-        Column(Modifier.padding(start = 16.dp, end = 18.dp, top = 16.dp, bottom = 18.dp)) {
+        Column(Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier
@@ -298,10 +299,11 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 Surface(
                     shape = RoundedCornerShape(50),
-                    color = Color(category.colorArgb).copy(alpha = 0.18f)
+                    color = Color(category.colorArgb).copy(alpha = 0.18f),
+                    modifier = Modifier.offset(x = (-9).dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 5.dp),
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -388,7 +390,7 @@ private fun AppointmentRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 76.dp)
-                .padding(start = 10.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Datumsplakette links – macht die Liste auf einen Blick lesbar.
@@ -415,7 +417,7 @@ private fun AppointmentRow(
                 }
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
 
             Column(Modifier.weight(1f)) {
                 // Uhrzeit und Kategorie zusammen ueber dem Namen.
