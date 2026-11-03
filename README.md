@@ -1,5 +1,11 @@
 # Meine Termine
 
+> **Hinweis:** Diese App wurde mit Hilfe von künstlicher Intelligenz
+> entwickelt. Konzept und Vorgaben stammen von ProTech1982, den Programmcode
+> hat überwiegend Claude (Anthropic) geschrieben. Der Code ist nicht Zeile für
+> Zeile von einem Menschen geprüft. Einzelheiten unter
+> [Mit künstlicher Intelligenz entwickelt](#mit-künstlicher-intelligenz-entwickelt).
+
 Eine eigenständige Android-App für Arzttermine – mit Kategorien, dem nächsten
 Termin ganz oben und Erinnerungen, die auch wirklich ankommen.
 
@@ -114,6 +120,50 @@ richtige Systemeinstellung springt.
 ```
 
 Die APK liegt dann unter `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Mit künstlicher Intelligenz entwickelt
+
+Diese App ist ein privates Projekt. Konzept, Anforderungen und alle
+Entscheidungen stammen von ProTech1982; den Programmcode hat überwiegend
+Claude, ein KI-Assistent von Anthropic, nach diesen Vorgaben geschrieben.
+
+**Was das bedeutet, wenn du die App benutzt oder den Code weiterverwendest:**
+
+- Der Code ist nicht von einem Menschen Zeile für Zeile geprüft worden.
+  Er wird automatisch kompiliert, aber nicht systematisch getestet.
+- Die App ist kein geprüftes Produkt und kein Medizinprodukt. Sie erinnert an
+  Termine, nichts weiter, und ersetzt keine ärztliche Beratung.
+- Sie kann Fehler enthalten. Verlass dich bei wichtigen Terminen nicht allein
+  auf sie.
+
+Dieser Hinweis steht hier aus Transparenz, nicht weil eine Vorschrift ihn
+verlangt. Wer ein öffentlich herunterladbares Programm anbietet, sollte sagen,
+wie es entstanden ist.
+
+## Haftung
+
+Die Nutzung erfolgt auf eigene Gefahr. Die App wird ohne Gewähr
+bereitgestellt; eine Haftung für Schäden aus ihrer Nutzung ist, soweit
+gesetzlich zulässig, ausgeschlossen. Unberührt bleibt die Haftung für Vorsatz
+und grobe Fahrlässigkeit sowie für Schäden aus der Verletzung von Leben,
+Körper oder Gesundheit.
+
+## Datenschutz
+
+Alle Termine bleiben auf dem Gerät, in einer lokalen Datenbank. Es gibt keine
+Konten, keine Cloud, keine Werbung und keine Analyse-Werkzeuge.
+
+Die App sendet nur in einem Fall Daten nach außen: wenn du in den Einstellungen
+auf **Nach Update suchen** tippst. Dann ruft sie die Angaben zum neuesten
+Release von `api.github.com` ab. GitHub sieht dabei – wie beim Aufruf jeder
+Webseite – die IP-Adresse des Geräts. Den Download selbst übernimmt der
+Browser, nicht die App.
+
+## Lizenz
+
+Der eigene Programmcode steht unter der MIT-Lizenz, siehe [LICENSE](LICENSE).
+Die verwendeten Bibliotheken stehen unter der Apache License 2.0, siehe
+[THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
 
 ## Technik
 

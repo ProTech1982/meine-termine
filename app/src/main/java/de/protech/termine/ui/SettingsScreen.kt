@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Schedule
@@ -80,6 +81,7 @@ fun SettingsScreen(
     status: SetupStatus,
     onBack: () -> Unit,
     onCategories: () -> Unit,
+    onLegal: () -> Unit,
     onFixNotifications: () -> Unit,
     onFixExactAlarms: () -> Unit,
     onFixBattery: () -> Unit
@@ -216,6 +218,31 @@ fun SettingsScreen(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text("Alle Versionen im Browser")
+                }
+            }
+
+            SettingsCard(
+                title = "Über & Rechtliches",
+                subtitle = "Diese App wurde mit Hilfe von KI entwickelt."
+            ) {
+                Text(
+                    text = "Konzept und Vorgaben stammen von ProTech1982, den Programmcode " +
+                        "hat überwiegend Claude (Anthropic) geschrieben. Dort stehen auch " +
+                        "Haftung, Datenschutz und die Lizenzen der verwendeten Bibliotheken.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(14.dp))
+                OutlinedButton(
+                    onClick = onLegal,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Text("Hinweise und Lizenzen")
                 }
             }
 

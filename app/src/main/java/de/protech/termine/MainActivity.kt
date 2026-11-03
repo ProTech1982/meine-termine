@@ -30,6 +30,7 @@ import androidx.navigation.navArgument
 import de.protech.termine.ui.CategoryScreen
 import de.protech.termine.ui.EditScreen
 import de.protech.termine.ui.HomeScreen
+import de.protech.termine.ui.LegalScreen
 import de.protech.termine.ui.SettingsScreen
 import de.protech.termine.ui.SetupStatus
 import de.protech.termine.ui.TermineViewModel
@@ -90,10 +91,14 @@ class MainActivity : ComponentActivity() {
                             status = setup,
                             onBack = { navController.popBackStack() },
                             onCategories = { navController.navigate("kategorien") },
+                            onLegal = { navController.navigate("rechtliches") },
                             onFixNotifications = { openNotificationSettings() },
                             onFixExactAlarms = { openExactAlarmSettings() },
                             onFixBattery = { openBatterySettings() }
                         )
+                    }
+                    composable("rechtliches") {
+                        LegalScreen(onBack = { navController.popBackStack() })
                     }
                     composable("kategorien") {
                         CategoryScreen(
