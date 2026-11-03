@@ -73,6 +73,12 @@ jobs:
           path: out/*.apk
           retention-days: 90
 
+      - name: Änderungstext festlegen
+        id: changes
+        run: |
+          # Nur die Betreffzeile des Commits, ohne Anhaenge wie Co-Authored-By.
+          echo "subject=$(git log -1 --pretty=%s)" >> "$GITHUB_OUTPUT"
+
       - name: Release veröffentlichen
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
@@ -83,6 +89,6 @@ jobs:
             Automatisch gebaut aus dem letzten Push auf main.
 
             Änderungen in diesem Build:
-            ${{ github.event.head_commit.message }}
+            ${{ steps.changes.outputs.subject }}
           files: out/*.apk
           make_latest: true
