@@ -31,10 +31,18 @@ data class Appearance(
     val opacityPercent: Int = 100,
     val pattern: Pattern = Pattern.NONE,
     /** Stärke des Musters in Prozent, 20 bis 100. */
-    val patternStrength: Int = 60
+    val patternStrength: Int = 60,
+    /** Eigene Farbe für das Muster. */
+    val patternColor: Color = Accents.DEFAULT,
+    /** Solange true, folgt das Muster der Akzentfarbe. */
+    val patternFollowsAccent: Boolean = true
 ) {
     val cardAlpha: Float get() = opacityPercent.coerceIn(55, 100) / 100f
     val translucent: Boolean get() = opacityPercent < 100
+
+    /** Die Farbe, in der das Muster tatsächlich gezeichnet wird. */
+    val effectivePatternColor: Color
+        get() = if (patternFollowsAccent) accent else patternColor
 }
 
 /** Auswahl der Akzentfarben. Namen wie bei „Unsere Tage“. */
@@ -54,8 +62,18 @@ object Accents {
         "Graphit" to Color(0xFF4A5A62)
     )
 
+    /** Zusätzliche, farblose Töne – nur für Muster sinnvoll. */
+    val NEUTRALS: List<Pair<String, Color>> = listOf(
+        "Nebel" to Color(0xFF9AA7A3),
+        "Sand" to Color(0xFFBCA98B),
+        "Tinte" to Color(0xFF2B363B)
+    )
+
+    /** Auswahl für die Musterfarbe: alle Akzente plus die neutralen Töne. */
+    val FOR_PATTERN: List<Pair<String, Color>> = ALL + NEUTRALS
+
     fun nameOf(color: Color): String =
-        ALL.firstOrNull { it.second.value == color.value }?.first ?: "Eigene"
+        (ALL + NEUTRALS).firstOrNull { it.second.value == color.value }?.first ?: "Eigene"
 }
 
 /**
@@ -85,7 +103,9 @@ class AppearanceStore(context: Context) {
             pattern = runCatching {
                 Pattern.valueOf(prefs.getString(KEY_PATTERN, Pattern.NONE.name)!!)
             }.getOrDefault(Pattern.NONE),
-            patternStrength = prefs.getInt(KEY_PATTERN_STRENGTH, 60)
+            patternStrength = prefs.getInt(KEY_PATTERN_STRENGTH, 60),
+            patternColor = Color(prefs.getInt(KEY_PATTERN_COLOR, Accents.DEFAULT.toArgb())),
+            patternFollowsAccent = prefs.getBoolean(KEY_PATTERN_FOLLOWS, true)
         )
     }
 
@@ -100,6 +120,8 @@ class AppearanceStore(context: Context) {
             .putInt(KEY_OPACITY, next.opacityPercent)
             .putString(KEY_PATTERN, next.pattern.name)
             .putInt(KEY_PATTERN_STRENGTH, next.patternStrength)
+            .putInt(KEY_PATTERN_COLOR, next.patternColor.toArgb())
+            .putBoolean(KEY_PATTERN_FOLLOWS, next.patternFollowsAccent)
             .apply()
     }
 
@@ -111,6 +133,12 @@ class AppearanceStore(context: Context) {
     fun setPattern(pattern: Pattern) = update { it.copy(pattern = pattern) }
     fun setPatternStrength(percent: Int) =
         update { it.copy(patternStrength = percent.coerceIn(20, 100)) }
+
+    fun setPatternColor(color: Color) =
+        update { it.copy(patternColor = color, patternFollowsAccent = false) }
+
+    fun setPatternFollowsAccent(follows: Boolean) =
+        update { it.copy(patternFollowsAccent = follows) }
 
     fun reset() = update {
         Appearance()
@@ -124,6 +152,8 @@ class AppearanceStore(context: Context) {
         const val KEY_OPACITY = "deckkraft"
         const val KEY_PATTERN = "muster"
         const val KEY_PATTERN_STRENGTH = "musterstaerke"
+        const val KEY_PATTERN_COLOR = "musterfarbe"
+        const val KEY_PATTERN_FOLLOWS = "musterfolgtakzent"
     }
 }
 

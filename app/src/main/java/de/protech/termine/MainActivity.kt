@@ -127,6 +127,8 @@ class MainActivity : ComponentActivity() {
                             onOpacity = store::setOpacity,
                             onPattern = store::setPattern,
                             onPatternStrength = store::setPatternStrength,
+                            onPatternColor = store::setPatternColor,
+                            onPatternFollowsAccent = store::setPatternFollowsAccent,
                             onReset = store::reset
                         )
                     }

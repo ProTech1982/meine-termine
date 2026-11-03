@@ -27,7 +27,8 @@ fun AppBackground(content: @Composable () -> Unit) {
     val dark = scheme.background.luminanceIsDark()
 
     val accent = look.accent
-    val patternColor = accent.copy(alpha = (look.patternStrength / 100f) * if (dark) 0.14f else 0.11f)
+    val patternColor = look.effectivePatternColor
+        .copy(alpha = (look.patternStrength / 100f) * if (dark) 0.14f else 0.11f)
     val glow = accent.copy(alpha = if (dark) 0.16f else 0.11f)
 
     Box(

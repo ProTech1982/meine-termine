@@ -25,7 +25,8 @@ Zeitumstellung automatisch neu gesetzt. Genau daran scheitern viele Apps.
 
 **Übersicht**
 
-- Der nächste Termin steht groß oben, mit Countdown ("noch 2 Tage 3 Std")
+- Der nächste Termin steht groß oben: Kategorie, darunter der Termin,
+  darunter der Countdown ("noch 2 Tage 3 Std")
 - Alles Weitere in Zeitgruppen: Heute, Morgen, Diese Woche, Nächste Woche, Monate
 - Datumsplakette links an jeder Zeile – die Liste liest sich im Vorbeigehen
 - Filter nach Kategorie, gewesene Termine einklappbar
@@ -54,12 +55,14 @@ Zeitumstellung automatisch neu gesetzt. Genau daran scheitern viele Apps.
 - Zehn Akzentfarben von Petrol bis Gold, oder die Systemfarben ab Android 12
 - Kachelform in drei Stufen: kantig, weich, rund
 - Deckkraft der Kacheln regelbar – darunter scheint der Hintergrund durch
-- Zehn Hintergrundmuster in drei Gruppen, in ihrer Stärke regelbar
+- Zehn Hintergrundmuster in drei Gruppen, in Stärke und Farbe regelbar
   - *Dezent:* Punkte, Raster, Karo, Höhenlinien
   - *Geometrisch:* Schräge, Zickzack, Waben, Kreuze
   - *Lebhaft:* Wellen, Konfetti
 - Die Muster werden berechnet, nicht als Bilder mitgeliefert: sie passen sich
   jeder Akzentfarbe an und wiegen nichts
+- Musterfarbe getrennt wählbar: dreizehn Töne, oder einfach der Akzentfarbe
+  folgend
 - Vorschaukachel oben zeigt sofort, wie alles zusammen wirkt
 
 **Sonst**

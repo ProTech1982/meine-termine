@@ -275,7 +275,7 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
         container = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Column(Modifier.padding(start = 16.dp, end = 18.dp, top = 16.dp, bottom = 18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier
@@ -291,24 +291,17 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            // Der Termin selbst steht oben, der Countdown darunter in
-            // kleinerer Schrift: beim Blick auf die Karte zaehlt zuerst,
-            // wo es hingeht, danach wie viel Zeit noch bleibt.
-            Text(
-                text = appointment.title,
-                style = MaterialTheme.typography.headlineMedium
-            )
-
+            // Zuerst die Kategorie, darunter der Termin, darunter der
+            // Countdown: so weiss man beim Hinsehen, welche Art Termin
+            // als naechstes ansteht, und erst dann, wie lange es noch ist.
             full.category?.let { category ->
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Surface(
                     shape = RoundedCornerShape(50),
                     color = Color(category.colorArgb).copy(alpha = 0.18f)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -326,7 +319,14 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(6.dp))
+
+            Text(
+                text = appointment.title,
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Spacer(Modifier.height(4.dp))
 
             Text(
                 text = countdown(appointment.startMillis),
@@ -388,7 +388,7 @@ private fun AppointmentRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 76.dp)
-                .padding(12.dp),
+                .padding(start = 10.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Datumsplakette links – macht die Liste auf einen Blick lesbar.
@@ -415,13 +415,19 @@ private fun AppointmentRow(
                 }
             }
 
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(12.dp))
 
             Column(Modifier.weight(1f)) {
+                // Uhrzeit und Kategorie zusammen ueber dem Namen.
+                val lead = buildList {
+                    add("${formatTime(appointment.startMillis)} Uhr")
+                    full.category?.let { add(it.name) }
+                }.joinToString(" · ")
                 Text(
-                    text = "${formatTime(appointment.startMillis)} Uhr",
+                    text = lead,
                     style = MaterialTheme.typography.labelLarge,
-                    color = accent.copy(alpha = alpha)
+                    color = accent.copy(alpha = alpha),
+                    maxLines = 1
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
@@ -429,14 +435,10 @@ private fun AppointmentRow(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
                 )
-                val subtitle = buildList {
-                    full.category?.let { add(it.name) }
-                    if (appointment.location.isNotBlank()) add(appointment.location)
-                }.joinToString(" · ")
-                if (subtitle.isNotBlank()) {
+                if (appointment.location.isNotBlank()) {
                     Spacer(Modifier.height(3.dp))
                     Text(
-                        text = subtitle,
+                        text = appointment.location,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
                         maxLines = 1

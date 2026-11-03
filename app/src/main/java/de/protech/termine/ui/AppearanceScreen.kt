@@ -68,6 +68,8 @@ fun AppearanceScreen(
     onOpacity: (Int) -> Unit,
     onPattern: (Pattern) -> Unit,
     onPatternStrength: (Int) -> Unit,
+    onPatternColor: (Color) -> Unit,
+    onPatternFollowsAccent: (Boolean) -> Unit,
     onReset: () -> Unit
 ) {
     val look = LocalAppearance.current
@@ -119,36 +121,11 @@ fun AppearanceScreen(
                 subtitle = if (look.useSystemColors) "Gerade übernimmt die App die Farben des Systems."
                 else "Gewählt: ${Accents.nameOf(look.accent)}"
             ) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Accents.ALL.forEach { (_, color) ->
-                        val selected = !look.useSystemColors && look.accent.value == color.value
-                        Box(
-                            Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .border(
-                                    width = if (selected) 3.dp else 0.dp,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    shape = CircleShape
-                                )
-                                .clickable { onAccent(color) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (selected) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = if (color.luminanceIsDark()) Color.White else Color.Black
-                                )
-                            }
-                        }
-                    }
-                }
+                ColorSwatches(
+                    colors = Accents.ALL,
+                    selected = if (look.useSystemColors) null else look.accent,
+                    onPick = onAccent
+                )
                 Spacer(Modifier.height(14.dp))
                 FilterChip(
                     selected = look.useSystemColors,
@@ -203,7 +180,7 @@ fun AppearanceScreen(
                         patterns.forEach { pattern ->
                             PatternTile(
                                 pattern = pattern,
-                                accent = look.accent,
+                                accent = look.effectivePatternColor,
                                 selected = look.pattern == pattern,
                                 onClick = { onPattern(pattern) }
                             )
@@ -224,6 +201,27 @@ fun AppearanceScreen(
                         onValueChange = { onPatternStrength(it.roundToInt()) },
                         valueRange = 20f..100f,
                         steps = 7
+                    )
+                }
+            }
+
+            if (look.pattern != Pattern.NONE) {
+                Block(
+                    title = "Musterfarbe",
+                    subtitle = if (look.patternFollowsAccent)
+                        "Folgt der Akzentfarbe (${Accents.nameOf(look.accent)})"
+                    else "Gewählt: ${Accents.nameOf(look.patternColor)}"
+                ) {
+                    ColorSwatches(
+                        colors = Accents.FOR_PATTERN,
+                        selected = if (look.patternFollowsAccent) null else look.patternColor,
+                        onPick = onPatternColor
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    FilterChip(
+                        selected = look.patternFollowsAccent,
+                        onClick = { onPatternFollowsAccent(!look.patternFollowsAccent) },
+                        label = { Text("Wie die Akzentfarbe") }
                     )
                 }
             }
@@ -276,7 +274,8 @@ private fun Block(
 private fun PreviewTile(look: Appearance) {
     val dark = MaterialTheme.colorScheme.background.luminanceIsDark()
     val canvasColor = if (dark) Color(0xFF101614) else Color(0xFFF3F8F5)
-    val patternColor = look.accent.copy(alpha = (look.patternStrength / 100f) * 0.22f)
+    val patternColor = look.effectivePatternColor
+        .copy(alpha = (look.patternStrength / 100f) * 0.22f)
 
     Box(
         Modifier
@@ -311,10 +310,10 @@ private fun PreviewTile(look: Appearance) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                Text("Kontrolle", style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(7.dp))
                 Text("Zahnarzt", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(3.dp))
+                Text("Kontrolle", style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(5.dp))
                 Text("noch 2 Tage 3 Std", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
@@ -384,5 +383,45 @@ private fun PatternTile(
             color = if (selected) scheme.primary else scheme.onSurfaceVariant,
             maxLines = 2
         )
+    }
+}
+
+/** Reihe runder Farbfelder. Ein Häkchen zeigt die Auswahl. */
+@Composable
+private fun ColorSwatches(
+    colors: List<Pair<String, Color>>,
+    selected: Color?,
+    onPick: (Color) -> Unit
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        colors.forEach { (name, color) ->
+            val isSelected = selected != null && selected.value == color.value
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(color)
+                    .border(
+                        width = if (isSelected) 3.dp else 1.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.outlineVariant,
+                        shape = CircleShape
+                    )
+                    .clickable { onPick(color) },
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = name,
+                        modifier = Modifier.size(20.dp),
+                        tint = if (color.luminanceIsDark()) Color.White else Color.Black
+                    )
+                }
+            }
+        }
     }
 }
