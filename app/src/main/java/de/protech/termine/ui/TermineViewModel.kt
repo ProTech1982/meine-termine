@@ -7,6 +7,7 @@ import de.protech.termine.TermineApp
 import de.protech.termine.data.Appointment
 import de.protech.termine.data.AppointmentFull
 import de.protech.termine.data.Category
+import de.protech.termine.data.Doctor
 import de.protech.termine.data.Marker
 import de.protech.termine.data.TermineRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,6 +108,21 @@ class TermineViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setMarkerFilter(markerId: Long?) {
         markerFilter.value = markerId
+    }
+
+    val doctors: StateFlow<List<Doctor>> =
+        repository.doctors.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun addDoctor(name: String, categoryId: Long?, location: String) {
+        viewModelScope.launch { repository.addDoctor(name, categoryId, location) }
+    }
+
+    fun updateDoctor(doctor: Doctor) {
+        viewModelScope.launch { repository.updateDoctor(doctor) }
+    }
+
+    fun deleteDoctor(id: Long) {
+        viewModelScope.launch { repository.deleteDoctor(id) }
     }
 
     fun appointment(id: Long) = repository.appointment(id)

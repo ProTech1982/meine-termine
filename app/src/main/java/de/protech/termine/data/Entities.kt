@@ -100,6 +100,30 @@ data class AppointmentMarker(
     val markerId: Long
 )
 
+/**
+ * Ein Arzt oder eine Praxis als Schnellauswahl beim Eintragen. Kategorie
+ * und Adresse sind Vorschlaege: beim Antippen werden sie uebernommen,
+ * lassen sich danach aber frei aendern.
+ */
+@Entity(
+    tableName = "doctors",
+    foreignKeys = [
+        ForeignKey(
+            entity = Category::class,
+            parentColumns = ["id"],
+            childColumns = ["categoryId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ],
+    indices = [Index("categoryId")]
+)
+data class Doctor(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val categoryId: Long? = null,
+    val location: String = ""
+)
+
 data class AppointmentFull(
     @Embedded val appointment: Appointment,
     @Relation(parentColumn = "categoryId", entityColumn = "id")

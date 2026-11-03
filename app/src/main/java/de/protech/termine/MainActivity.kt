@@ -32,6 +32,7 @@ import de.protech.termine.look.AppBackground
 import de.protech.termine.look.LocalAppearance
 import de.protech.termine.ui.AppearanceScreen
 import de.protech.termine.ui.CategoryScreen
+import de.protech.termine.ui.DoctorScreen
 import de.protech.termine.ui.MarkerScreen
 import de.protech.termine.ui.EditScreen
 import de.protech.termine.ui.HomeScreen
@@ -103,6 +104,7 @@ class MainActivity : ComponentActivity() {
                             onBack = { navController.popBackStack() },
                             onCategories = { navController.navigate("kategorien") },
                             onMarkers = { navController.navigate("kennzeichen") },
+                            onDoctors = { navController.navigate("aerzte") },
                             onAppearance = { navController.navigate("darstellung") },
                             onLegal = { navController.navigate("rechtliches") },
                             onFixNotifications = { openNotificationSettings() },
@@ -121,6 +123,12 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("kennzeichen") {
                         MarkerScreen(
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("aerzte") {
+                        DoctorScreen(
                             viewModel = viewModel,
                             onBack = { navController.popBackStack() }
                         )

@@ -92,4 +92,18 @@ interface TermineDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun linkMarkers(links: List<AppointmentMarker>)
+
+    /* --- Aerzte --- */
+
+    @Query("SELECT * FROM doctors ORDER BY name COLLATE NOCASE ASC")
+    fun observeDoctors(): Flow<List<Doctor>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDoctor(doctor: Doctor): Long
+
+    @Update
+    suspend fun updateDoctor(doctor: Doctor)
+
+    @Query("DELETE FROM doctors WHERE id = :id")
+    suspend fun deleteDoctorById(id: Long)
 }

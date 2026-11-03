@@ -87,6 +87,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onCategories: () -> Unit,
     onMarkers: () -> Unit,
+    onDoctors: () -> Unit,
     onAppearance: () -> Unit,
     onLegal: () -> Unit,
     onFixNotifications: () -> Unit,
@@ -204,6 +205,24 @@ fun SettingsScreen(
                     Icon(Icons.Default.Label, contentDescription = null, Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
                     Text("Kennzeichen verwalten")
+                }
+            }
+
+            /* --- Aerzte --- */
+            SettingsCard(
+                title = "Ärzte",
+                subtitle = "Schnellauswahl beim Eintragen, mit Kategorie und Ort."
+            ) {
+                OutlinedButton(
+                    onClick = onDoctors,
+                    shape = fieldShape(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(Icons.Default.Label, contentDescription = null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Text("Ärzte verwalten")
                 }
             }
 

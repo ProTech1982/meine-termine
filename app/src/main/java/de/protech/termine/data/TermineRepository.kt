@@ -12,6 +12,7 @@ class TermineRepository(
     val appointments: Flow<List<AppointmentFull>> = dao.observeAll()
     val categories: Flow<List<Category>> = dao.observeCategories()
     val markers: Flow<List<Marker>> = dao.observeMarkers()
+    val doctors: Flow<List<Doctor>> = dao.observeDoctors()
 
     fun appointment(id: Long): Flow<AppointmentFull?> = dao.observeOne(id)
 
@@ -85,6 +86,14 @@ class TermineRepository(
     suspend fun updateMarker(marker: Marker) = dao.updateMarker(marker)
 
     suspend fun deleteMarker(id: Long) = dao.deleteMarkerById(id)
+
+    suspend fun addDoctor(name: String, categoryId: Long?, location: String) {
+        dao.insertDoctor(Doctor(name = name, categoryId = categoryId, location = location))
+    }
+
+    suspend fun updateDoctor(doctor: Doctor) = dao.updateDoctor(doctor)
+
+    suspend fun deleteDoctor(id: Long) = dao.deleteDoctorById(id)
 
     companion object {
         val DEFAULT_CATEGORIES = listOf(

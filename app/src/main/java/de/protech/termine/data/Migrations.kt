@@ -51,5 +51,26 @@ object Migrations {
         }
     }
 
-    val ALL = arrayOf(FROM_1_TO_2)
+    /** Version 3: Aerzte als Schnellauswahl beim Eintragen. */
+    val FROM_2_TO_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS doctors (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    categoryId INTEGER,
+                    location TEXT NOT NULL,
+                    FOREIGN KEY(categoryId) REFERENCES categories(id)
+                        ON UPDATE NO ACTION ON DELETE SET NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_doctors_categoryId ON doctors(categoryId)"
+            )
+        }
+    }
+
+    val ALL = arrayOf(FROM_1_TO_2, FROM_2_TO_3)
 }

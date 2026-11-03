@@ -70,6 +70,7 @@ import de.protech.termine.look.AppCard
 import de.protech.termine.look.fieldShape
 import de.protech.termine.data.Appointment
 import de.protech.termine.data.Category
+import de.protech.termine.data.Doctor
 import de.protech.termine.data.Marker
 import java.time.Instant
 import java.time.LocalDate
@@ -86,6 +87,7 @@ fun EditScreen(
     val isNew = appointmentId == 0L
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val markers by viewModel.markers.collectAsStateWithLifecycle()
+    val doctors by viewModel.doctors.collectAsStateWithLifecycle()
     val existing by viewModel.appointment(appointmentId)
         .collectAsStateWithLifecycle(initialValue = null)
 
@@ -204,6 +206,45 @@ fun EditScreen(
                     shape = fieldShape(),
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (doctors.isNotEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Ärzte",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Antippen setzt Name, Kategorie und Ort ein; alles bleibt änderbar.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        doctors.forEach { doctor ->
+                            val chosen = title.trim() == doctor.name
+                            FilterChip(
+                                selected = chosen,
+                                onClick = {
+                                    if (chosen) {
+                                        title = ""
+                                    } else {
+                                        title = doctor.name
+                                        doctor.categoryId?.let { categoryId = it }
+                                        if (doctor.location.isNotBlank()) {
+                                            location = doctor.location
+                                        }
+                                    }
+                                },
+                                label = { Text(doctor.name) }
+                            )
+                        }
+                    }
+                }
 
                 if (categories.isNotEmpty()) {
                     Spacer(Modifier.height(14.dp))
