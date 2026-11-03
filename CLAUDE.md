@@ -108,9 +108,25 @@ nie gestartet. Deshalb laeuft in der Action vor dem Bauen:
 
 ## Stand
 
-**3. November 2026, Version 1.0.14**
+**3. November 2026, Version 1.0.17**
 
 Zuletzt gemacht:
+
+- 1.0.17: **Aerzte als Schnellauswahl.** Eigene Tabelle `doctors` (Name,
+  optionale `categoryId`, optionaler Ort), Datenbank auf Version 3, Migration
+  `FROM_2_TO_3`. Verwaltung in `DoctorScreen.kt`, Chips im `EditScreen` unter
+  dem Feld "Bezeichnung": ein Tipp setzt Name, Kategorie und Ort, nochmal
+  tippen leert das Namensfeld. Das Feld bleibt ein normales Textfeld, der
+  Nutzer kann hinter dem Namen weiterschreiben ("Dr. Weber - Kontrolle");
+  der Chip ist dann nicht mehr hervorgehoben, weil der Text nicht mehr
+  exakt passt. Die Liste startet leer - keine Vorgaben, das sind seine
+  eigenen Aerzte.
+- 1.0.15: Kennzeichen lesbar gemacht. Die reine Kennzeichenfarbe als
+  Schriftfarbe war auf dunklem Grund kaum zu entziffern; jetzt rechnet
+  `readableOn()` in `HomeScreen.kt` die Schrift gegen den Untergrund
+  (Kontrast mindestens 4.5), dazu eine zarte Fuellung und eine Stufe
+  groessere Schrift. **Merke:** Eine Nutzerfarbe nie ungeprueft als
+  Schriftfarbe verwenden.
 
 - 1.0.14: **Kennzeichen** - ein Zusatzschild neben der Kategorie, zum
   Beispiel "Labor" neben "Diabetologe". Ein Termin kann mehrere tragen;
