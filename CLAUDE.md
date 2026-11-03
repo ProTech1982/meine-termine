@@ -108,9 +108,15 @@ nie gestartet. Deshalb laeuft in der Action vor dem Bauen:
 
 ## Stand
 
-**3. November 2026, Version 1.0.17**
+**3. November 2026, Version 1.0.19**
 
 Zuletzt gemacht:
+
+- 1.0.19: Die Adresse in der Karte "Als Naechstes" ist antippbar und oeffnet
+  die Karten-App ueber `openInMaps()` in `HomeScreen.kt` - ein
+  `geo:0,0?q=<Adresse>`-Verweis, bewusst **nicht** Google Maps direkt: so
+  waehlt der Nutzer die App, und es braucht weder Berechtigung noch fremden
+  Programmbaustein. Dazu ein Absatz im Datenschutz-Teil von `LegalScreen.kt`.
 
 - 1.0.17: **Aerzte als Schnellauswahl.** Eigene Tabelle `doctors` (Name,
   optionale `categoryId`, optionaler Ort), Datenbank auf Version 3, Migration
