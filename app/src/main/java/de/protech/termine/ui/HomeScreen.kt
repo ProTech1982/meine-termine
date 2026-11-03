@@ -2,8 +2,12 @@
 
 package de.protech.termine.ui
 
+import android.content.Intent
+import android.net.Uri
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,12 +65,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.protech.termine.look.AppCard
@@ -382,6 +388,7 @@ private fun GroupHeader(label: String, count: Int) {
 private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
     val accent = full.category?.let { Color(it.colorArgb) } ?: MaterialTheme.colorScheme.primary
     val appointment = full.appointment
+    val context = LocalContext.current
 
     AppCard(
         modifier = Modifier.fillMaxWidth(),
@@ -486,7 +493,11 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
 
             if (appointment.location.isNotBlank()) {
                 Spacer(Modifier.height(8.dp))
-                InfoLine(icon = Icons.Default.Place, text = appointment.location)
+                InfoLine(
+                    icon = Icons.Default.Place,
+                    text = appointment.location,
+                    onClick = { openInMaps(context, appointment.location) }
+                )
             }
 
             if (full.reminders.isNotEmpty()) {
@@ -502,8 +513,11 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
 }
 
 @Composable
-private fun InfoLine(icon: ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.Top) {
+private fun InfoLine(icon: ImageVector, text: String, onClick: (() -> Unit)? = null) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    ) {
         Icon(
             icon,
             contentDescription = null,
@@ -512,8 +526,25 @@ private fun InfoLine(icon: ImageVector, text: String) {
                 .size(18.dp)
         )
         Spacer(Modifier.width(10.dp))
-        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            textDecoration = if (onClick != null) TextDecoration.Underline else null
+        )
     }
+}
+
+/**
+ * Uebergibt die Adresse an die Karten-App des Geraets. Bewusst als
+ * geo:-Verweis und nicht als Google-Maps-Adresse: so entscheidet der Nutzer,
+ * womit geoeffnet wird, und die App braucht weder eine Berechtigung noch
+ * einen fremden Programmbaustein. Ist keine Karten-App da, passiert nichts.
+ */
+private fun openInMaps(context: android.content.Context, address: String) {
+    if (address.isBlank()) return
+    val uri = Uri.parse("geo:0,0?q=" + Uri.encode(address))
+    val intent = Intent(Intent.ACTION_VIEW, uri)
+    runCatching { context.startActivity(intent) }
 }
 
 @Composable

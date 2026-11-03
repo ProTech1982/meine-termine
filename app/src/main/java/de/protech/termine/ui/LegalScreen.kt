@@ -116,6 +116,14 @@ fun LegalScreen(onBack: () -> Unit) {
                         "wie beim Aufruf jeder Webseite – die IP-Adresse des Geräts. " +
                         "Den Download selbst übernimmt der Browser, nicht die App."
                 )
+                Spacer(Modifier.height(10.dp))
+                Paragraph(
+                    "Tippst du auf die Adresse eines Termins, wird sie an die Karten-App " +
+                        "übergeben, die auf diesem Gerät dafür eingestellt ist. Die App " +
+                        "bindet keine Karte ein und übermittelt von sich aus nichts an " +
+                        "Kartendienste. Was die geöffnete App mit der Adresse macht, " +
+                        "richtet sich nach deren eigener Datenschutzerklärung."
+                )
             }
 
             LegalCard("Lizenzen") {
