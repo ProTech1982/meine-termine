@@ -312,9 +312,11 @@ private fun PreviewTile(look: Appearance) {
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("noch 2 Tage 3 Std", style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Zahnarzt · Kontrolle", style = MaterialTheme.typography.bodyMedium)
+                Text("Kontrolle", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(3.dp))
+                Text("Zahnarzt", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(5.dp))
+                Text("noch 2 Tage 3 Std", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(

@@ -88,7 +88,12 @@ fun HomeScreen(
         containerColor = Color.Transparent,
         topBar = {
             LargeTopAppBar(
-                title = { Text("Meine Termine") },
+                title = {
+                    Text(
+                        text = "Meine Termine",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor = Color.Transparent,
                     scrolledContainerColor = Color.Transparent
@@ -286,18 +291,14 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                 )
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Text(
-                text = countdown(appointment.startMillis),
-                style = MaterialTheme.typography.displaySmall
-            )
-
-            Spacer(Modifier.height(10.dp))
-
+            // Der Termin selbst steht oben, der Countdown darunter in
+            // kleinerer Schrift: beim Blick auf die Karte zaehlt zuerst,
+            // wo es hingeht, danach wie viel Zeit noch bleibt.
             Text(
                 text = appointment.title,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineMedium
             )
 
             full.category?.let { category ->
@@ -324,6 +325,13 @@ private fun NextCard(full: AppointmentFull, onClick: () -> Unit) {
                     }
                 }
             }
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                text = countdown(appointment.startMillis),
+                style = MaterialTheme.typography.titleLarge
+            )
 
             Spacer(Modifier.height(14.dp))
 
