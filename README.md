@@ -17,32 +17,51 @@ Zeitumstellung automatisch neu gesetzt. Genau daran scheitern viele Apps.
 
 ## Funktionen
 
-- Termine mit Bezeichnung, Datum, Uhrzeit, Ort und Notizen
-- Frei verwaltbare Kategorien mit Farbe (Hausarzt, Zahnarzt, Diabetologe,
-  Augenarzt, Orthopäde, Physiotherapie, Labor, Sonstiges – weitere selbst anlegbar)
-- Nächster Termin prominent oben mit Countdown ("noch 2 Tage 3 Std")
-- Filter nach Kategorie, vergangene Termine einklappbar
+**Übersicht**
+
+- Der nächste Termin steht groß oben, mit Countdown ("noch 2 Tage 3 Std")
+- Alles Weitere in Zeitgruppen: Heute, Morgen, Diese Woche, Nächste Woche, Monate
+- Datumsplakette links an jeder Zeile – die Liste liest sich im Vorbeigehen
+- Filter nach Kategorie, gewesene Termine einklappbar
+- Glockensymbol zeigt, wo eine Erinnerung hängt
+
+**Eintragen**
+
+- Abschnitte statt endloses Formular: Worum geht es, Wann, Erinnerung, Noch etwas
+- Kategorie als Farbchip antippen statt aus einer Liste suchen
+- Schnellauswahl fürs Datum: Morgen, Übermorgen, In 1 Woche, In 4 Wochen
 - Beliebig viele Erinnerungen pro Termin
   - Vorgaben: pünktlich, 15 / 30 / 45 Minuten, 1 / 2 / 3 Stunden, 1 / 2 Tage, 1 Woche
   - frei eingebbare Vorlaufzeit in Minuten, Stunden oder Tagen
+
+**Einstellungen**
+
+- Erinnerungs-Prüfung: zeigt grün oder rot, was Android gerade erlaubt
+  (Benachrichtigungen, exakte Alarme, Akku-Optimierung) – jeweils mit einem
+  Knopf, der direkt in die richtige Systemeinstellung springt
+- Kategorien mit Namen und Farbe frei verwalten
+- Update-Suche
+
+**Sonst**
+
+- Material 3, dunkles Design, ab Android 12 auf Wunsch mit den Systemfarben
 - Komplett offline, keine Konten, keine Cloud, keine Werbung
-- Hinweiskarte in der App, falls Android exakte Alarme oder die
-  Akku-Optimierung noch blockiert – mit direktem Sprung in die Einstellungen
 
-## Updates – die App aktualisiert sich selbst
+## Updates – prüfen in der App, laden im Browser
 
-Oben rechts in der App sitzt das Update-Symbol. Ein Tipp darauf fragt das
-neueste GitHub-Release ab, vergleicht es mit der installierten Version und
-bietet bei Bedarf den Download an. Die APK wird über den System-Download-Manager
-geladen (mit Fortschrittsanzeige) und danach direkt dem Paket-Installer
-übergeben. Kein Store, kein Konto, kein manuelles Suchen.
+Unter **Einstellungen → Version und Update** sucht die App auf GitHub nach einer
+neueren Fassung. Findet sie eine, zeigt sie an, was neu ist, und öffnet auf
+Wunsch den **Browser** mit der APK. Heruntergeladen und installiert wird dort.
 
-Einmalig muss Android der App erlauben, Pakete zu installieren – die App
-erkennt das und bietet den Sprung in die passende Einstellung an.
+Das ist Absicht: Eine App, die Pakete selbst herunterlädt und installiert,
+braucht die Berechtigung `REQUEST_INSTALL_PACKAGES` und einen `FileProvider`.
+Android warnt dann beim Installieren, und Play Protect stuft so eine App gerne
+als riskant ein. Diese App fragt deshalb nur nach der Versionsnummer und
+übergibt die Adresse an den Browser – dem das System ohnehin vertraut. Die
+einzige Berechtigung dafür ist `INTERNET`.
 
 Die Versionsnummer vergibt GitHub Actions automatisch als `1.0.<Build-Nummer>`,
-jeder Push auf `main` erzeugt also ein neues Release, das die App findet. Unten
-in der Terminliste steht immer, welche Version gerade installiert ist.
+jeder Push auf `main` erzeugt also ein Release, das die App findet.
 
 ## Signatur – wichtig für Updates
 
@@ -101,6 +120,6 @@ Die APK liegt dann unter `app/build/outputs/apk/debug/app-debug.apk`.
 - Kotlin, Jetpack Compose, Material 3 (mit dynamischen Farben ab Android 12)
 - Room als lokale Datenbank (`termine.db`)
 - `AlarmManager.setAlarmClock()` + `BootReceiver` für die Erinnerungen
-- Selbst-Update über die GitHub-Releases-API, `DownloadManager` und `FileProvider`
-  (ohne zusätzliche Bibliotheken)
+- Update-Prüfung über die GitHub-Releases-API, Download im Browser
+  (keine Installationsberechtigung nötig, keine zusätzlichen Bibliotheken)
 - minSdk 26 (Android 8.0), targetSdk 35

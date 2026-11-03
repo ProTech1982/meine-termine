@@ -4,10 +4,10 @@ package de.protech.termine.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,32 +18,33 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
@@ -59,12 +60,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.protech.termine.data.Appointment
+import de.protech.termine.data.Category
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -77,23 +78,21 @@ fun EditScreen(
     appointmentId: Long,
     onBack: () -> Unit
 ) {
+    val isNew = appointmentId == 0L
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val existing by viewModel.appointment(appointmentId)
         .collectAsStateWithLifecycle(initialValue = null)
 
-    var loaded by remember { mutableStateOf(appointmentId == 0L) }
+    var loaded by remember { mutableStateOf(isNew) }
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var categoryId by remember { mutableStateOf<Long?>(null) }
     var dateTime by remember {
-        mutableStateOf(
-            LocalDateTime.now().plusDays(1).withMinute(0).withSecond(0).withNano(0)
-        )
+        mutableStateOf(LocalDateTime.now().plusDays(1).withMinute(0).withSecond(0).withNano(0))
     }
     val reminders = remember { mutableStateListOf<Int>() }
 
-    // Bestehenden Termin einmalig in die Felder uebernehmen.
     LaunchedEffect(existing) {
         val full = existing
         if (!loaded && full != null) {
@@ -109,11 +108,10 @@ fun EditScreen(
         }
     }
 
-    // Standard-Erinnerung fuer neue Termine.
     LaunchedEffect(Unit) {
-        if (appointmentId == 0L && reminders.isEmpty()) {
-            reminders.add(60)
+        if (isNew && reminders.isEmpty()) {
             reminders.add(1440)
+            reminders.add(60)
         }
     }
 
@@ -125,20 +123,53 @@ fun EditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (appointmentId == 0L) "Neuer Termin" else "Termin bearbeiten") },
+                title = { Text(if (isNew) "Neuer Termin" else "Termin ändern") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
                     }
                 },
                 actions = {
-                    if (appointmentId != 0L) {
+                    if (!isNew) {
                         IconButton(onClick = { showDeleteConfirm = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Löschen")
+                            Icon(Icons.Default.Delete, contentDescription = "Termin löschen")
                         }
                     }
                 }
             )
+        },
+        bottomBar = {
+            Surface(
+                tonalElevation = 3.dp,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Button(
+                    onClick = {
+                        val millis = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        viewModel.save(
+                            Appointment(
+                                id = appointmentId,
+                                title = title.trim().ifBlank { "Termin" },
+                                categoryId = categoryId,
+                                startMillis = millis,
+                                location = location.trim(),
+                                notes = notes.trim()
+                            ),
+                            reminders.toList(),
+                            onDone = onBack
+                        )
+                    },
+                    enabled = title.isNotBlank(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(54.dp)
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(Modifier.width(10.dp))
+                    Text(if (isNew) "Termin speichern" else "Änderung speichern")
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -146,131 +177,158 @@ fun EditScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp)
         ) {
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Bezeichnung") },
-                placeholder = { Text("z. B. Kontrolle, Blutabnahme") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Spacer(Modifier.height(8.dp))
 
-            Spacer(Modifier.height(12.dp))
+            Section(title = "Worum geht es?") {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Bezeichnung") },
+                    placeholder = { Text("z. B. Kontrolle oder Blutabnahme") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            CategoryPicker(
-                categories = categories,
-                selectedId = categoryId,
-                onSelect = { categoryId = it }
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.DateRange, contentDescription = null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
+                if (categories.isNotEmpty()) {
+                    Spacer(Modifier.height(14.dp))
                     Text(
-                        dateTime.toLocalDate()
-                            .format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                        "Kategorie",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
-                OutlinedButton(
-                    onClick = { showTimePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        dateTime.toLocalTime()
-                            .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) + " Uhr"
-                    )
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        categories.forEach { category ->
+                            CategoryChip(
+                                category = category,
+                                selected = categoryId == category.id,
+                                onClick = {
+                                    categoryId = if (categoryId == category.id) null else category.id
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(12.dp))
+            Section(title = "Wann?") {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    QuickDate("Morgen", 1, dateTime) { dateTime = it }
+                    QuickDate("Übermorgen", 2, dateTime) { dateTime = it }
+                    QuickDate("In 1 Woche", 7, dateTime) { dateTime = it }
+                    QuickDate("In 4 Wochen", 28, dateTime) { dateTime = it }
+                }
 
-            Text("Erinnerungen", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                "Mehrere sind möglich – zum Beispiel am Vortag und noch mal kurz vorher.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(14.dp))
 
-            ReminderChips(
-                selected = reminders,
-                onToggle = { minutes ->
-                    if (reminders.contains(minutes)) reminders.remove(minutes)
-                    else reminders.add(minutes)
-                },
-                onCustom = { showCustomReminder = true }
-            )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = { showDatePicker = true },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .weight(1.4f)
+                            .height(52.dp)
+                    ) {
+                        Icon(Icons.Default.DateRange, contentDescription = null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(formatNumericDate(dateTime.toEpochMillisHere()))
+                    }
+                    OutlinedButton(
+                        onClick = { showTimePicker = true },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                    ) {
+                        Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(formatTime(dateTime.toEpochMillisHere()))
+                    }
+                }
 
-            if (reminders.any { it !in REMINDER_PRESETS }) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
+
                 Text(
-                    "Eigene: " + reminders.filter { it !in REMINDER_PRESETS }
-                        .sorted().joinToString(", ") { reminderLabel(it) },
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "${formatLongDate(dateTime.toEpochMillisHere())} · " +
+                        relativeDay(dateTime.toEpochMillisHere()),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = location,
-                onValueChange = { location = it },
-                label = { Text("Ort / Praxis") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text("Notizen") },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    val millis = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    viewModel.save(
-                        Appointment(
-                            id = appointmentId,
-                            title = title.ifBlank { "Termin" },
-                            categoryId = categoryId,
-                            startMillis = millis,
-                            location = location.trim(),
-                            notes = notes.trim()
-                        ),
-                        reminders.toList(),
-                        onDone = onBack
-                    )
-                },
-                enabled = title.isNotBlank(),
-                modifier = Modifier.fillMaxWidth()
+            Section(
+                title = "Erinnerung",
+                subtitle = "Mehrere sind möglich – etwa am Vortag und noch mal kurz vorher."
             ) {
-                Text("Speichern")
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    REMINDER_PRESETS.forEach { minutes ->
+                        FilterChip(
+                            selected = reminders.contains(minutes),
+                            onClick = {
+                                if (reminders.contains(minutes)) reminders.remove(minutes)
+                                else reminders.add(minutes)
+                            },
+                            label = { Text(reminderChipLabel(minutes)) }
+                        )
+                    }
+                    reminders.filter { it !in REMINDER_PRESETS }.sorted().forEach { minutes ->
+                        FilterChip(
+                            selected = true,
+                            onClick = { reminders.remove(minutes) },
+                            label = { Text(reminderChipLabel(minutes)) }
+                        )
+                    }
+                    AssistChip(
+                        onClick = { showCustomReminder = true },
+                        label = { Text("eigene Zeit") }
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = if (reminders.isEmpty()) "Keine Erinnerung – der Termin steht nur in der Liste."
+                    else reminders.sorted().joinToString(", ") { reminderLabel(it) },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (reminders.isEmpty()) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Section(title = "Noch etwas?") {
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    label = { Text("Ort oder Praxis") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notizen") },
+                    placeholder = { Text("Überweisung, Nüchtern kommen, Karte mitnehmen …") },
+                    minLines = 3,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 
@@ -350,98 +408,82 @@ fun EditScreen(
                 }) { Text("Löschen") }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Abbrechen") }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Behalten") }
             }
         )
     }
 }
 
-@Composable
-private fun CategoryPicker(
-    categories: List<de.protech.termine.data.Category>,
-    selectedId: Long?,
-    onSelect: (Long?) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val selected = categories.firstOrNull { it.id == selectedId }
+/* ---------- Bausteine ---------- */
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
+private fun LocalDateTime.toEpochMillisHere(): Long =
+    atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+@Composable
+private fun Section(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable () -> Unit
+) {
+    Spacer(Modifier.height(14.dp))
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        TextField(
-            value = selected?.name ?: "Keine Kategorie",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Kategorie") },
-            leadingIcon = selected?.let {
-                {
-                    Box(
-                        Modifier
-                            .size(14.dp)
-                            .clip(CircleShape)
-                            .background(Color(it.colorArgb))
-                    )
-                }
-            },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text("Keine Kategorie") },
-                onClick = { onSelect(null); expanded = false }
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
-            categories.forEach { category ->
-                DropdownMenuItem(
-                    text = { Text(category.name) },
-                    leadingIcon = {
-                        Box(
-                            Modifier
-                                .size(14.dp)
-                                .clip(CircleShape)
-                                .background(Color(category.colorArgb))
-                        )
-                    },
-                    onClick = { onSelect(category.id); expanded = false }
+            if (subtitle != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Spacer(Modifier.height(14.dp))
+            content()
         }
     }
 }
 
 @Composable
-private fun ReminderChips(
-    selected: List<Int>,
-    onToggle: (Int) -> Unit,
-    onCustom: () -> Unit
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        REMINDER_PRESETS.forEach { minutes ->
-            FilterChip(
-                selected = selected.contains(minutes),
-                onClick = { onToggle(minutes) },
-                label = { Text(shortReminderLabel(minutes)) }
+private fun CategoryChip(category: Category, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(category.name) },
+        leadingIcon = {
+            Box(
+                Modifier
+                    .size(11.dp)
+                    .clip(CircleShape)
+                    .background(Color(category.colorArgb))
             )
         }
-        AssistChip(onClick = onCustom, label = { Text("+ eigene") })
-    }
+    )
 }
 
-private fun shortReminderLabel(minutes: Int): String = when {
-    minutes <= 0 -> "pünktlich"
-    minutes < 60 -> "$minutes Min"
-    minutes == 60 -> "1 Std"
-    minutes < 1440 -> "${minutes / 60} Std"
-    minutes == 1440 -> "1 Tag"
-    minutes < 10080 -> "${minutes / 1440} Tage"
-    else -> "1 Woche"
+@Composable
+private fun QuickDate(
+    label: String,
+    daysFromToday: Long,
+    current: LocalDateTime,
+    onPick: (LocalDateTime) -> Unit
+) {
+    val target = LocalDate.now().plusDays(daysFromToday)
+    AssistChip(
+        onClick = { onPick(LocalDateTime.of(target, current.toLocalTime())) },
+        label = { Text(label) }
+    )
 }
 
 @Composable
@@ -450,24 +492,26 @@ private fun CustomReminderDialog(
     onConfirm: (Int) -> Unit
 ) {
     var amount by remember { mutableStateOf("") }
-    var unit by remember { mutableStateOf(Unit2.MINUTEN) }
+    var unit by remember { mutableStateOf(ReminderUnit.MINUTEN) }
+    val minutes = (amount.toIntOrNull() ?: 0) * unit.factor
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Eigene Erinnerung") },
+        title = { Text("Eigene Vorlaufzeit") },
         text = {
             Column {
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { new -> amount = new.filter { it.isDigit() }.take(4) },
-                    label = { Text("Vorlaufzeit") },
+                    label = { Text("Wie viel vorher?") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Unit2.entries.forEach { option ->
+                    ReminderUnit.entries.forEach { option ->
                         FilterChip(
                             selected = unit == option,
                             onClick = { unit = option },
@@ -475,22 +519,20 @@ private fun CustomReminderDialog(
                         )
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                val minutes = (amount.toIntOrNull() ?: 0) * unit.factor
                 if (minutes > 0) {
+                    Spacer(Modifier.height(14.dp))
                     Text(
                         "Erinnerung ${reminderLabel(minutes)}",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm((amount.toIntOrNull() ?: 0) * unit.factor) },
-                enabled = (amount.toIntOrNull() ?: 0) > 0
-            ) { Text("Hinzufügen") }
+            TextButton(onClick = { onConfirm(minutes) }, enabled = minutes > 0) {
+                Text("Hinzufügen")
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Abbrechen") }
@@ -498,7 +540,7 @@ private fun CustomReminderDialog(
     )
 }
 
-private enum class Unit2(val label: String, val factor: Int) {
+private enum class ReminderUnit(val label: String, val factor: Int) {
     MINUTEN("Minuten", 1),
     STUNDEN("Stunden", 60),
     TAGE("Tage", 1440)

@@ -16,11 +16,20 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-data class ListUiState(
-    val upcoming: List<AppointmentFull> = emptyList(),
+/** Ein Eintrag der Übersichtsliste: Überschrift oder Termin. */
+sealed interface AgendaItem {
+    data class Header(val label: String, val count: Int) : AgendaItem
+    data class Entry(val full: AppointmentFull) : AgendaItem
+}
+
+data class HomeUiState(
+    val next: AppointmentFull? = null,
+    val agenda: List<AgendaItem> = emptyList(),
     val past: List<AppointmentFull> = emptyList(),
     val categories: List<Category> = emptyList(),
-    val activeFilter: Long? = null
+    val activeFilter: Long? = null,
+    val totalUpcoming: Int = 0,
+    val loaded: Boolean = false
 )
 
 class TermineViewModel(app: Application) : AndroidViewModel(app) {
@@ -30,27 +39,44 @@ class TermineViewModel(app: Application) : AndroidViewModel(app) {
     private val filter = MutableStateFlow<Long?>(null)
     val activeFilter: StateFlow<Long?> = filter.asStateFlow()
 
-    val uiState: StateFlow<ListUiState> =
-        combine(
-            repository.appointments,
-            repository.categories,
-            filter
-        ) { appointments, categories, activeFilter ->
+    val uiState: StateFlow<HomeUiState> =
+        combine(repository.appointments, repository.categories, filter) { all, categories, active ->
             val now = System.currentTimeMillis()
-            val visible = appointments.filter {
-                activeFilter == null || it.appointment.categoryId == activeFilter
+            val visible = all.filter { active == null || it.appointment.categoryId == active }
+
+            val upcoming = visible
+                .filter { it.appointment.startMillis >= now }
+                .sortedBy { it.appointment.startMillis }
+
+            val past = visible
+                .filter { it.appointment.startMillis < now }
+                .sortedByDescending { it.appointment.startMillis }
+
+            // Alles ausser dem obersten Termin wird in Zeitgruppen einsortiert.
+            val rest = upcoming.drop(1)
+            val agenda = buildList {
+                var currentLabel: String? = null
+                val grouped = rest.groupBy { groupLabel(it.appointment.startMillis, now) }
+                rest.forEach { entry ->
+                    val label = groupLabel(entry.appointment.startMillis, now)
+                    if (label != currentLabel) {
+                        add(AgendaItem.Header(label, grouped[label]?.size ?: 0))
+                        currentLabel = label
+                    }
+                    add(AgendaItem.Entry(entry))
+                }
             }
-            ListUiState(
-                upcoming = visible
-                    .filter { it.appointment.startMillis >= now }
-                    .sortedBy { it.appointment.startMillis },
-                past = visible
-                    .filter { it.appointment.startMillis < now }
-                    .sortedByDescending { it.appointment.startMillis },
+
+            HomeUiState(
+                next = upcoming.firstOrNull(),
+                agenda = agenda,
+                past = past,
                 categories = categories,
-                activeFilter = activeFilter
+                activeFilter = active,
+                totalUpcoming = upcoming.size,
+                loaded = true
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListUiState())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     val categories: StateFlow<List<Category>> =
         repository.categories.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
