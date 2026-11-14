@@ -11,9 +11,11 @@ val appVersionCode: Int = (project.findProperty("appVersionCode") as String?)?.t
 // Damit sich eine neue Version ueber die vorherige legen laesst, muss jede APK
 // mit demselben Schluessel signiert sein. Der Schluessel kommt aus einem
 // GitHub-Secret und liegt nicht im Repository.
-val keystoreFile = rootProject.file("keystore/meine-termine.jks")
-val keystorePassword: String? = System.getenv("KEYSTORE_PASSWORD")
-val signingReady = keystoreFile.exists() && !keystorePassword.isNullOrBlank()
+val keystoreFile: File? = System.getenv("ANDROID_KEYSTORE_FILE")?.let { File(it) }
+val keystorePassword: String? = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+val keystoreAlias: String? = System.getenv("ANDROID_KEY_ALIAS")
+val signingReady = keystoreFile?.exists() == true &&
+    !keystorePassword.isNullOrBlank() && !keystoreAlias.isNullOrBlank()
 
 android {
     namespace = "de.protech.termine"
@@ -34,7 +36,7 @@ android {
         signingConfigs.create("shared") {
             storeFile = keystoreFile
             storePassword = keystorePassword
-            keyAlias = System.getenv("KEY_ALIAS") ?: "meinetermine"
+            keyAlias = keystoreAlias
             keyPassword = keystorePassword
         }
     }
