@@ -88,6 +88,11 @@ class AppearanceStore(context: Context) {
     var value: Appearance by mutableStateOf(load())
         private set
 
+    /** Liest die Werte neu aus dem Speicher, etwa nach einer Wiederherstellung. */
+    fun reload() {
+        value = load()
+    }
+
     private fun load(): Appearance {
         val accentArgb = prefs.getInt(KEY_ACCENT, Accents.DEFAULT.toArgb())
         return Appearance(

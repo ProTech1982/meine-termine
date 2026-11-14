@@ -43,6 +43,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import de.protech.termine.data.Backup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -97,6 +102,26 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var updateState by remember { mutableStateOf<UpdateState>(UpdateState.Idle) }
+    var confirmRestore by remember { mutableStateOf(false) }
+
+    val createBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        if (uri != null) scope.launch {
+            Backup.write(context, uri)
+                .onSuccess { Toast.makeText(context, "Sicherung gespeichert ($it Einträge)", Toast.LENGTH_LONG).show() }
+                .onFailure { Toast.makeText(context, "Sicherung fehlgeschlagen: ${it.message}", Toast.LENGTH_LONG).show() }
+        }
+    }
+    val openBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) scope.launch {
+            Backup.restore(context, uri)
+                .onSuccess { Toast.makeText(context, "Wiederhergestellt ($it Einträge)", Toast.LENGTH_LONG).show() }
+                .onFailure { Toast.makeText(context, "Wiederherstellen fehlgeschlagen: ${it.message}", Toast.LENGTH_LONG).show() }
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -226,6 +251,35 @@ fun SettingsScreen(
                 }
             }
 
+            /* --- Sicherung --- */
+            SettingsCard(
+                title = "Sicherung",
+                subtitle = "Alle Termine und Einstellungen in einer Datei."
+            ) {
+                Text(
+                    text = "Die Datei legst du selbst ab, zum Beispiel in Downloads oder in der Cloud. " +
+                        "Sie übersteht eine Neuinstallation der App.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = { createBackup.launch(Backup.suggestedName()) },
+                    shape = fieldShape(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) { Text("Sicherung speichern") }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { confirmRestore = true },
+                    shape = fieldShape(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) { Text("Sicherung wiederherstellen") }
+            }
+
             /* --- Update --- */
             SettingsCard(
                 title = "Version und Update",
@@ -321,6 +375,23 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(32.dp))
         }
+    }
+
+    if (confirmRestore) {
+        AlertDialog(
+            onDismissRequest = { confirmRestore = false },
+            title = { Text("Sicherung wiederherstellen?") },
+            text = { Text("Alle jetzigen Termine und Einstellungen werden durch die Sicherung ersetzt.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmRestore = false
+                    openBackup.launch(arrayOf("application/json", "text/plain", "*/*"))
+                }) { Text("Wiederherstellen") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRestore = false }) { Text("Abbrechen") }
+            }
+        )
     }
 
     /* --- Dialoge zur Update-Suche --- */
